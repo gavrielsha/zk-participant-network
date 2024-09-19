@@ -12,7 +12,6 @@ const DKGMultisigWallet = () => {
   const [participantAddress, setParticipantAddress] = useState('');
   const [publicKey, setPublicKey] = useState('');
   const [feedback, setFeedback] = useState('');
-  const [round, setRound] = useState(0);
   const [contract, setContract] = useState(null);
   const [signer, setSigner] = useState(null);
   const [benchmarks, setBenchmarks] = useState({ gas: 0, proofTime: 0, memory: 0 });
@@ -26,24 +25,13 @@ const DKGMultisigWallet = () => {
           const signer = provider.getSigner();
           setSigner(signer);
 
-          const contractAddress = "YOUR_DEPLOYED_CONTRACT_ADDRESS"; // Replace with your deployed contract address
+          const contractAddress = "0x1234567890123456789012345678901234567890"; // Replace with your actual deployed contract address
           const contractInstance = new ethers.Contract(contractAddress, DKGMultisigWalletABI.abi, signer);
           setContract(contractInstance);
-
-          const currentRound = await contractInstance.getRound();
-          setRound(currentRound.toNumber());
 
           contractInstance.on("ParticipantAdded", (participant) => {
             setParticipants(prevParticipants => [...prevParticipants, participant]);
             setFeedback(`Participant ${participant} added successfully!`);
-          });
-
-          contractInstance.on("CommitmentSubmitted", (participant, commitment) => {
-            setFeedback(`Commitment submitted by ${participant}`);
-          });
-
-          contractInstance.on("ShareSubmitted", (participant, share) => {
-            setFeedback(`Share submitted by ${participant}`);
           });
 
           contractInstance.on("KeyGenerated", (generatedKey) => {
@@ -81,17 +69,20 @@ const DKGMultisigWallet = () => {
 
     try {
       const startTime = performance.now();
+      const startMemory = window.performance.memory ? window.performance.memory.usedJSHeapSize : 0;
+
       const tx = await contract.addParticipant(participantAddress);
       setFeedback("Adding participant... Please wait for transaction confirmation.");
       
       const receipt = await tx.wait();
       const endTime = performance.now();
+      const endMemory = window.performance.memory ? window.performance.memory.usedJSHeapSize : 0;
 
-      setBenchmarks(prev => ({
-        ...prev,
+      setBenchmarks({
         gas: receipt.gasUsed.toString(),
         proofTime: (endTime - startTime).toFixed(2),
-      }));
+        memory: ((endMemory - startMemory) / (1024 * 1024)).toFixed(2)
+      });
 
       setParticipantAddress('');
     } catch (error) {
@@ -108,50 +99,22 @@ const DKGMultisigWallet = () => {
 
     try {
       const startTime = performance.now();
+      const startMemory = window.performance.memory ? window.performance.memory.usedJSHeapSize : 0;
+
       const tx = await contract.startKeyGeneration();
       setFeedback("Starting key generation... Please wait for transaction confirmation.");
       
       const receipt = await tx.wait();
       const endTime = performance.now();
+      const endMemory = window.performance.memory ? window.performance.memory.usedJSHeapSize : 0;
 
-      setBenchmarks(prev => ({
-        ...prev,
+      setBenchmarks({
         gas: receipt.gasUsed.toString(),
         proofTime: (endTime - startTime).toFixed(2),
-      }));
-
-      const currentRound = await contract.getRound();
-      setRound(currentRound.toNumber());
+        memory: ((endMemory - startMemory) / (1024 * 1024)).toFixed(2)
+      });
     } catch (error) {
       console.error("Error starting key generation:", error);
-      setFeedback(`Error: ${error.message}`);
-    }
-  };
-
-  const advanceRound = async () => {
-    if (!contract || !signer) {
-      setFeedback("Please connect to Ethereum first.");
-      return;
-    }
-
-    try {
-      const startTime = performance.now();
-      const tx = await contract.advanceRound();
-      setFeedback("Advancing round... Please wait for transaction confirmation.");
-      
-      const receipt = await tx.wait();
-      const endTime = performance.now();
-
-      setBenchmarks(prev => ({
-        ...prev,
-        gas: receipt.gasUsed.toString(),
-        proofTime: (endTime - startTime).toFixed(2),
-      }));
-
-      const currentRound = await contract.getRound();
-      setRound(currentRound.toNumber());
-    } catch (error) {
-      console.error("Error advancing round:", error);
       setFeedback(`Error: ${error.message}`);
     }
   };
@@ -174,14 +137,10 @@ const DKGMultisigWallet = () => {
           </div>
           <Button onClick={addParticipant}>Add Participant</Button>
           <Button onClick={startKeyGeneration}>Start Key Generation</Button>
-          <Button onClick={advanceRound}>Advance Round</Button>
-          <Alert>
-            <AlertTitle>Current Round</AlertTitle>
-            <AlertDescription>{round}</AlertDescription>
-          </Alert>
           <Alert>
             <AlertTitle>Participants</AlertTitle>
             <AlertDescription>
+              Total: {participants.length}
               {participants.map((p, index) => (
                 <div key={index}>{p}</div>
               ))}
