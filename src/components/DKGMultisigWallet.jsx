@@ -119,12 +119,14 @@ const DKGMultisigWallet = () => {
       </CardHeader>
       <CardContent>
         <div className="space-y-4">
-          <Button onClick={connectWallet} disabled={isConnected} className="bg-[#B5FF81] text-[#0A0A0A] hover:bg-transparent hover:text-[#B5FF81] border border-[#B5FF81]">
-            {isConnected ? `Connected to ${networkName}` : "Connect Wallet"}
-          </Button>
-          <Button onClick={startKeyGeneration} disabled={!isConnected} className="bg-[#B5FF81] text-[#0A0A0A] hover:bg-transparent hover:text-[#B5FF81] border border-[#B5FF81]">
-            Start Key Generation
-          </Button>
+          <div className="space-x-4">
+            <Button onClick={connectWallet} disabled={isConnected} className="bg-[#B5FF81] text-[#0A0A0A] hover:bg-transparent hover:text-[#B5FF81] border border-[#B5FF81]">
+              {isConnected ? `Connected to ${networkName}` : "Connect Wallet"}
+            </Button>
+            <Button onClick={startKeyGeneration} disabled={!isConnected} className="bg-[#B5FF81] text-[#0A0A0A] hover:bg-transparent hover:text-[#B5FF81] border border-[#B5FF81]">
+              Start Key Generation
+            </Button>
+          </div>
           <ParticipantList participants={participants} connectedAddress={connectedAddress} />
           <BenchmarkDisplay benchmarks={benchmarks} />
           <Alert variant={feedback.includes('Error') ? 'destructive' : 'default'} className="bg-transparent border border-[#B5FF81] text-[#B5FF81]">
