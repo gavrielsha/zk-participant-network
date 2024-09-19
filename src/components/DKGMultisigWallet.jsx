@@ -16,6 +16,7 @@ const DKGMultisigWallet = () => {
   const [networkName, setNetworkName] = useState('');
   const [isConnected, setIsConnected] = useState(false);
   const [connectedAddress, setConnectedAddress] = useState('');
+  const [isParticipant, setIsParticipant] = useState(false);
 
   const connectWallet = async () => {
     if (typeof window.ethereum !== 'undefined') {
@@ -37,9 +38,11 @@ const DKGMultisigWallet = () => {
         const address = await signer.getAddress();
         setConnectedAddress(address);
 
-        setupEventListeners(contractInstance);
-        await fetchParticipants(contractInstance);
+        // Automatically add the user as a participant
         await addParticipant(contractInstance, address);
+
+        setupEventListeners(contractInstance);
+        fetchParticipants(contractInstance);
       } catch (error) {
         console.error("Failed to connect to Ethereum:", error);
         setFeedback(`Failed to connect to Ethereum: ${error.message}. Make sure you have MetaMask installed and connected to the Sepolia testnet.`);
@@ -53,6 +56,7 @@ const DKGMultisigWallet = () => {
     contractInstance.on("ParticipantAdded", (participant) => {
       fetchParticipants(contractInstance);
       if (participant.toLowerCase() === connectedAddress.toLowerCase()) {
+        setIsParticipant(true);
         setFeedback("You have been added as a participant successfully!");
       }
     });
@@ -73,9 +77,9 @@ const DKGMultisigWallet = () => {
 
   const addParticipant = async (contractInstance, address) => {
     try {
+      setFeedback("Adding you as a participant... Transaction sent.");
       const tx = await contractInstance.addParticipant(address);
       await tx.wait();
-      setFeedback("You have been added as a participant successfully!");
     } catch (error) {
       console.error("Error adding participant:", error);
       setFeedback(`Error: ${error.message}. Make sure you have enough ETH for gas.`);
@@ -88,11 +92,17 @@ const DKGMultisigWallet = () => {
       return;
     }
 
+    if (!isParticipant) {
+      setFeedback("Please wait until you're added as a participant.");
+      return;
+    }
+
     try {
       setFeedback("Initiating key generation...");
       const startTime = performance.now();
       const startMemory = performance.memory ? performance.memory.usedJSHeapSize : 0;
 
+      // Call the generateKey function without any arguments
       const tx = await contract.generateKey();
       const receipt = await tx.wait();
 
@@ -123,7 +133,7 @@ const DKGMultisigWallet = () => {
             <Button onClick={connectWallet} disabled={isConnected} className="bg-[#B5FF81] text-[#0A0A0A] hover:bg-transparent hover:text-[#B5FF81] border border-[#B5FF81]">
               {isConnected ? `Connected to ${networkName}` : "Connect Wallet"}
             </Button>
-            <Button onClick={startKeyGeneration} disabled={!isConnected} className="bg-[#B5FF81] text-[#0A0A0A] hover:bg-transparent hover:text-[#B5FF81] border border-[#B5FF81]">
+            <Button onClick={startKeyGeneration} disabled={!isConnected || !isParticipant} className="bg-[#B5FF81] text-[#0A0A0A] hover:bg-transparent hover:text-[#B5FF81] border border-[#B5FF81]">
               Start Key Generation
             </Button>
           </div>
