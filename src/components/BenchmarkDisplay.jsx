@@ -11,7 +11,7 @@ const BenchmarkDisplay = ({ benchmarks }) => {
   };
 
   const formatGas = (gas) => {
-    return (gas / 1000).toFixed(2);
+    return (parseInt(gas) / 1000).toFixed(2);
   };
 
   return (

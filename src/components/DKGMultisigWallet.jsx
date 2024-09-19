@@ -4,10 +4,8 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import DKGMultisigWalletABI from '../contracts/DKGMultisigWallet.json';
-import WalletConnection from './WalletConnection';
 import ParticipantList from './ParticipantList';
 import BenchmarkDisplay from './BenchmarkDisplay';
-import NetworkStatus from './NetworkStatus';
 
 const DKGMultisigWallet = () => {
   const [participants, setParticipants] = useState([]);
@@ -18,22 +16,6 @@ const DKGMultisigWallet = () => {
   const [networkName, setNetworkName] = useState('');
   const [isConnected, setIsConnected] = useState(false);
   const [connectedAddress, setConnectedAddress] = useState('');
-
-  useEffect(() => {
-    const initializeEthers = async () => {
-      if (typeof window.ethereum !== 'undefined') {
-        try {
-          const provider = new ethers.providers.Web3Provider(window.ethereum);
-          const network = await provider.getNetwork();
-          setNetworkName(network.name);
-        } catch (error) {
-          console.error("Failed to get network information:", error);
-        }
-      }
-    };
-
-    initializeEthers();
-  }, []);
 
   const connectWallet = async () => {
     if (typeof window.ethereum !== 'undefined') {
@@ -116,15 +98,12 @@ const DKGMultisigWallet = () => {
     }
 
     try {
-      setFeedback("Initiating off-chain key generation...");
+      setFeedback("Initiating key generation...");
       const startTime = performance.now();
       const startMemory = performance.memory ? performance.memory.usedJSHeapSize : 0;
 
       // Simulate off-chain key generation
       await new Promise(resolve => setTimeout(resolve, 2000)); // Simulating 2 seconds of computation
-
-      const endTime = performance.now();
-      const endMemory = performance.memory ? performance.memory.usedJSHeapSize : 0;
 
       // Generate a mock proof (this should be replaced with actual zk-SNARK proof generation)
       const mockProof = {
@@ -133,9 +112,12 @@ const DKGMultisigWallet = () => {
         c: [ethers.BigNumber.from(ethers.utils.randomBytes(32)), ethers.BigNumber.from(ethers.utils.randomBytes(32))]
       };
 
-      // Submit the proof to the network
+      // Submit the proof to the smart contract
       const tx = await contract.submitProof(mockProof.a, mockProof.b, mockProof.c);
       const receipt = await tx.wait();
+
+      const endTime = performance.now();
+      const endMemory = performance.memory ? performance.memory.usedJSHeapSize : 0;
 
       setBenchmarks({
         gas: receipt.gasUsed.toString(),
@@ -157,11 +139,12 @@ const DKGMultisigWallet = () => {
       </CardHeader>
       <CardContent>
         <div className="space-y-4">
-          <NetworkStatus isConnected={isConnected} networkName={networkName} />
-          <WalletConnection networkName={networkName} isConnected={isConnected} onConnect={connectWallet} />
+          <Button onClick={connectWallet} disabled={isConnected} className="bg-[#B5FF81] text-[#0A0A0A] hover:bg-transparent hover:text-[#B5FF81] border border-[#B5FF81]">
+            {isConnected ? `Connected to ${networkName}` : "Connect Wallet"}
+          </Button>
           <div className="space-x-4">
-            <Button onClick={addParticipant} className="bg-[#B5FF81] text-[#0A0A0A] hover:bg-transparent hover:text-[#B5FF81] border border-[#B5FF81]">Add Participant</Button>
-            <Button onClick={startKeyGeneration} className="bg-[#B5FF81] text-[#0A0A0A] hover:bg-transparent hover:text-[#B5FF81] border border-[#B5FF81]">Start Key Generation</Button>
+            <Button onClick={addParticipant} disabled={!isConnected} className="bg-[#B5FF81] text-[#0A0A0A] hover:bg-transparent hover:text-[#B5FF81] border border-[#B5FF81]">Add Participant</Button>
+            <Button onClick={startKeyGeneration} disabled={!isConnected} className="bg-[#B5FF81] text-[#0A0A0A] hover:bg-transparent hover:text-[#B5FF81] border border-[#B5FF81]">Start Key Generation</Button>
           </div>
           <ParticipantList participants={participants} connectedAddress={connectedAddress} />
           <BenchmarkDisplay benchmarks={benchmarks} />
