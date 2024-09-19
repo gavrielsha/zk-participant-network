@@ -65,17 +65,27 @@ const DKGMultisigWallet = () => {
     try {
       const participantList = await contractInstance.getParticipants();
       setParticipants(participantList);
-      setFeedback(`You have been added as a participant successfully! Total participants: ${participantList.length}`);
+      updateFeedbackWithParticipantCount(participantList.length);
     } catch (error) {
       console.error("Error fetching participants:", error);
     }
   };
 
+  const updateFeedbackWithParticipantCount = (count) => {
+    setFeedback(`Total participants: ${count}`);
+  };
+
   const addParticipant = async (contractInstance, address) => {
     try {
-      setFeedback("Adding you as a participant... Please check your wallet for confirmation.");
+      setFeedback("Adding you as a participant... Transaction sent.");
       const tx = await contractInstance.addParticipant(address);
+      
+      // Optimistically update the UI
+      setParticipants(prevParticipants => [...prevParticipants, address]);
+      updateFeedbackWithParticipantCount(participants.length + 1);
+
       await tx.wait();
+      setFeedback("You have been added as a participant successfully!");
     } catch (error) {
       console.error("Error adding participant:", error);
       setFeedback(`Error: ${error.message}. Make sure you have enough ETH for gas.`);
