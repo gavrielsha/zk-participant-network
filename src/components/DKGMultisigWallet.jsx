@@ -108,21 +108,20 @@ const DKGMultisigWallet = () => {
     try {
       setFeedback("Initiating key generation...");
       const startTime = performance.now();
-      const startMemory = performance.memory ? performance.memory.usedJSHeapSize : 0;
 
       const tx = await contract.generateKey();
       const receipt = await tx.wait();
 
       const endTime = performance.now();
-      const endMemory = performance.memory ? performance.memory.usedJSHeapSize : 0;
 
-      // Calculate memory usage, ensuring it's non-negative
-      const memoryUsage = Math.max(0, endMemory - startMemory);
+      // Estimate memory usage based on transaction data size
+      const txDataSize = ethers.utils.hexDataLength(tx.data);
+      const estimatedMemoryUsage = txDataSize * 2; // Rough estimate: 2 bytes per transaction data byte
 
       setBenchmarks({
         gas: receipt.gasUsed.toString(),
         proofTime: endTime - startTime,
-        memoryUsage: memoryUsage,
+        memoryUsage: estimatedMemoryUsage,
       });
 
       setFeedback("Key generation completed successfully!");

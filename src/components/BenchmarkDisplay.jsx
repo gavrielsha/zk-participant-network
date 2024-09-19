@@ -7,7 +7,7 @@ const BenchmarkDisplay = ({ benchmarks }) => {
   };
 
   const formatMemory = (memory) => {
-    return (memory / 1024 / 1024).toFixed(2);
+    return (memory / 1024).toFixed(2);
   };
 
   const formatGas = (gas) => {
@@ -20,7 +20,7 @@ const BenchmarkDisplay = ({ benchmarks }) => {
       <AlertDescription>
         <div>Gas Used: {formatGas(benchmarks.gas)} kgas</div>
         <div>Proof Generation Time: {formatTime(benchmarks.proofTime)} ms</div>
-        <div>Memory Usage: {formatMemory(benchmarks.memoryUsage)} MB</div>
+        <div>Estimated Memory Usage: {formatMemory(benchmarks.memoryUsage)} KB</div>
       </AlertDescription>
     </Alert>
   );
