@@ -9,6 +9,7 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 const contractABI = [
   "function addParticipant(address participant) public",
   "function generateKey() public",
+  "function getParticipants() public view returns (address[])",
   "event ParticipantAdded(address participant)",
   "event KeyGenerated(bytes32 publicKey)"
 ];
@@ -18,10 +19,9 @@ const DKGMultisigWallet = () => {
   const [contract, setContract] = useState(null);
   const [account, setAccount] = useState('');
   const [participantAddress, setParticipantAddress] = useState('');
-  const [contractAddress, setContractAddress] = useState('');
-  const [gasUsed, setGasUsed] = useState(0);
-  const [proofTime, setProofTime] = useState(0);
-  const [memoryUsage, setMemoryUsage] = useState(0);
+  const [contractAddress, setContractAddress] = useState('0x1234567890123456789012345678901234567890'); // Replace with your deployed contract address
+  const [participants, setParticipants] = useState([]);
+  const [publicKey, setPublicKey] = useState('');
   const [feedback, setFeedback] = useState('');
 
   useEffect(() => {
@@ -44,6 +44,15 @@ const DKGMultisigWallet = () => {
           window.ethereum.on('accountsChanged', (accounts) => {
             setAccount(accounts[0]);
           });
+
+          // Initialize contract
+          const signer = provider.getSigner();
+          const contract = new ethers.Contract(contractAddress, contractABI, signer);
+          setContract(contract);
+          setFeedback('Contract initialized successfully!');
+
+          // Load participants
+          loadParticipants(contract);
         } catch (error) {
           setFeedback('Error connecting to MetaMask: ' + error.message);
         }
@@ -55,24 +64,18 @@ const DKGMultisigWallet = () => {
     init();
   }, []);
 
-  const initializeContract = async () => {
-    if (!ethers.utils.isAddress(contractAddress)) {
-      setFeedback('Invalid contract address');
-      return;
-    }
+  const loadParticipants = async (contract) => {
     try {
-      const signer = provider.getSigner();
-      const contract = new ethers.Contract(contractAddress, contractABI, signer);
-      setContract(contract);
-      setFeedback('Contract initialized successfully!');
+      const participantList = await contract.getParticipants();
+      setParticipants(participantList);
     } catch (error) {
-      setFeedback('Error initializing contract: ' + error.message);
+      console.error('Error loading participants:', error);
     }
   };
 
   const addParticipant = async () => {
     if (!contract) {
-      setFeedback('Contract not initialized. Please initialize the contract first.');
+      setFeedback('Contract not initialized.');
       return;
     }
     if (!ethers.utils.isAddress(participantAddress)) {
@@ -81,15 +84,11 @@ const DKGMultisigWallet = () => {
     }
     try {
       setFeedback('Processing...');
-      const startTime = performance.now();
       const tx = await contract.addParticipant(participantAddress);
-      const receipt = await tx.wait();
-      const endTime = performance.now();
-
-      setGasUsed(receipt.gasUsed.toString());
-      setProofTime(endTime - startTime);
-      setMemoryUsage(Math.random() * 100); // Mock value
+      await tx.wait();
       setFeedback('Participant added successfully!');
+      loadParticipants(contract);
+      setParticipantAddress('');
     } catch (error) {
       setFeedback('Error: ' + error.message);
     }
@@ -97,20 +96,18 @@ const DKGMultisigWallet = () => {
 
   const generateKey = async () => {
     if (!contract) {
-      setFeedback('Contract not initialized. Please initialize the contract first.');
+      setFeedback('Contract not initialized.');
       return;
     }
     try {
       setFeedback('Generating key...');
-      const startTime = performance.now();
       const tx = await contract.generateKey();
       const receipt = await tx.wait();
-      const endTime = performance.now();
-
-      setGasUsed(receipt.gasUsed.toString());
-      setProofTime(endTime - startTime);
-      setMemoryUsage(Math.random() * 100); // Mock value
-      setFeedback('Key generated successfully!');
+      const event = receipt.events.find(e => e.event === 'KeyGenerated');
+      if (event) {
+        setPublicKey(event.args.publicKey);
+        setFeedback('Key generated successfully!');
+      }
     } catch (error) {
       setFeedback('Error: ' + error.message);
     }
@@ -134,11 +131,9 @@ const DKGMultisigWallet = () => {
             <Input
               id="contract-address"
               value={contractAddress}
-              onChange={(e) => setContractAddress(e.target.value)}
-              placeholder="0x..."
+              readOnly
             />
           </div>
-          <Button onClick={initializeContract}>Initialize Contract</Button>
           <div>
             <Label htmlFor="participant-address">Participant Address</Label>
             <Input
@@ -151,13 +146,19 @@ const DKGMultisigWallet = () => {
           <Button onClick={addParticipant}>Add Participant</Button>
           <Button onClick={generateKey}>Generate Key</Button>
           <Alert>
-            <AlertTitle>Wallet Information</AlertTitle>
+            <AlertTitle>Participants</AlertTitle>
             <AlertDescription>
-              <p>Gas Used: {gasUsed}</p>
-              <p>Proof Time: {proofTime.toFixed(2)} ms</p>
-              <p>Memory Usage: {memoryUsage.toFixed(2)} MB</p>
+              {participants.map((p, index) => (
+                <div key={index}>{p}</div>
+              ))}
             </AlertDescription>
           </Alert>
+          {publicKey && (
+            <Alert>
+              <AlertTitle>Generated Public Key</AlertTitle>
+              <AlertDescription>{publicKey}</AlertDescription>
+            </Alert>
+          )}
           <Alert variant={feedback.includes('Error') ? 'destructive' : 'default'}>
             <AlertTitle>Status</AlertTitle>
             <AlertDescription>{feedback}</AlertDescription>
