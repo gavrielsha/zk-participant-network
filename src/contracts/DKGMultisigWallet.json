@@ -16,6 +16,19 @@
       "inputs": [
         {
           "indexed": false,
+          "internalType": "bytes32",
+          "name": "publicKey",
+          "type": "bytes32"
+        }
+      ],
+      "name": "KeyGenerated",
+      "type": "event"
+    },
+    {
+      "anonymous": false,
+      "inputs": [
+        {
+          "indexed": false,
           "internalType": "address",
           "name": "participant",
           "type": "address"
@@ -33,6 +46,13 @@
         }
       ],
       "name": "addParticipant",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "generateKey",
       "outputs": [],
       "stateMutability": "nonpayable",
       "type": "function"
@@ -58,6 +78,32 @@
           "internalType": "address[]",
           "name": "",
           "type": "address[]"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "getRound",
+      "outputs": [
+        {
+          "internalType": "uint256",
+          "name": "",
+          "type": "uint256"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "groupPublicKey",
+      "outputs": [
+        {
+          "internalType": "bytes32",
+          "name": "",
+          "type": "bytes32"
         }
       ],
       "stateMutability": "view",
@@ -93,9 +139,27 @@
       "name": "participants",
       "outputs": [
         {
+          "internalType": "address",
+          "name": "addr",
+          "type": "address"
+        },
+        {
           "internalType": "bool",
-          "name": "",
+          "name": "isActive",
           "type": "bool"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "round",
+      "outputs": [
+        {
+          "internalType": "uint256",
+          "name": "",
+          "type": "uint256"
         }
       ],
       "stateMutability": "view",

@@ -4,13 +4,18 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import DKGMultisigWalletABI from '../contracts/DKGMultisigWallet.json';
+import ParticipantList from './ParticipantList';
+import BenchmarkDisplay from './BenchmarkDisplay';
 
 const DKGMultisigWallet = () => {
+  const [participants, setParticipants] = useState([]);
   const [feedback, setFeedback] = useState('');
   const [contract, setContract] = useState(null);
   const [signer, setSigner] = useState(null);
+  const [benchmarks, setBenchmarks] = useState({ gas: 0, proofTime: 0, memoryUsage: 0 });
+  const [networkName, setNetworkName] = useState('');
   const [isConnected, setIsConnected] = useState(false);
-  const [connectedWallets, setConnectedWallets] = useState(0);
+  const [connectedAddress, setConnectedAddress] = useState('');
 
   const connectWallet = async () => {
     if (typeof window.ethereum !== 'undefined') {
@@ -20,6 +25,9 @@ const DKGMultisigWallet = () => {
         const signer = provider.getSigner();
         setSigner(signer);
 
+        const network = await provider.getNetwork();
+        setNetworkName(network.name);
+
         const contractAddress = "0x1234567890123456789012345678901234567890"; // Replace with your actual deployed contract address
         const contractInstance = new ethers.Contract(contractAddress, DKGMultisigWalletABI.abi, signer);
         setContract(contractInstance);
@@ -28,10 +36,10 @@ const DKGMultisigWallet = () => {
         setFeedback("Wallet connected successfully!");
 
         const address = await signer.getAddress();
-        await addParticipant(contractInstance, address);
+        setConnectedAddress(address);
 
         setupEventListeners(contractInstance);
-        fetchConnectedWallets(contractInstance);
+        fetchParticipants(contractInstance);
       } catch (error) {
         console.error("Failed to connect to Ethereum:", error);
         setFeedback(`Failed to connect to Ethereum: ${error.message}. Make sure you have MetaMask installed and connected to the Sepolia testnet.`);
@@ -44,26 +52,68 @@ const DKGMultisigWallet = () => {
   const setupEventListeners = (contractInstance) => {
     contractInstance.on("ParticipantAdded", (participant) => {
       setFeedback(`Participant ${participant} added successfully!`);
-      fetchConnectedWallets(contractInstance);
+      fetchParticipants(contractInstance);
+    });
+
+    contractInstance.on("KeyGenerated", (generatedKey) => {
+      setFeedback('Key generated successfully!');
     });
   };
 
-  const fetchConnectedWallets = async (contractInstance) => {
+  const fetchParticipants = async (contractInstance) => {
     try {
-      const count = await contractInstance.getParticipantCount();
-      setConnectedWallets(count.toNumber());
+      const participantList = await contractInstance.getParticipants();
+      setParticipants(participantList);
     } catch (error) {
-      console.error("Error fetching connected wallets:", error);
+      console.error("Error fetching participants:", error);
     }
   };
 
-  const addParticipant = async (contractInstance, address) => {
+  const addParticipant = async () => {
+    if (!isConnected) {
+      setFeedback("Please connect your wallet first.");
+      return;
+    }
+
     try {
-      const tx = await contractInstance.addParticipant(address);
+      setFeedback("Adding you as a participant... Please check your wallet for confirmation.");
+      const tx = await contract.addParticipant(connectedAddress);
       await tx.wait();
+      setFeedback("Transaction sent. Waiting for confirmation...");
+      // The ParticipantAdded event will trigger a refresh of the participant list
     } catch (error) {
       console.error("Error adding participant:", error);
       setFeedback(`Error: ${error.message}. Make sure your wallet is connected and you have enough ETH for gas.`);
+    }
+  };
+
+  const startKeyGeneration = async () => {
+    if (!isConnected) {
+      setFeedback("Please connect your wallet first.");
+      return;
+    }
+
+    try {
+      setFeedback("Initiating key generation...");
+      const startTime = performance.now();
+      const startMemory = performance.memory ? performance.memory.usedJSHeapSize : 0;
+
+      const tx = await contract.generateKey();
+      const receipt = await tx.wait();
+
+      const endTime = performance.now();
+      const endMemory = performance.memory ? performance.memory.usedJSHeapSize : 0;
+
+      setBenchmarks({
+        gas: receipt.gasUsed.toString(),
+        proofTime: endTime - startTime,
+        memoryUsage: endMemory - startMemory,
+      });
+
+      setFeedback("Key generation completed successfully!");
+    } catch (error) {
+      console.error("Error in key generation process:", error);
+      setFeedback(`Error: ${error.message}. Key generation failed.`);
     }
   };
 
@@ -75,14 +125,16 @@ const DKGMultisigWallet = () => {
       <CardContent>
         <div className="space-y-4">
           <Button onClick={connectWallet} disabled={isConnected} className="bg-[#B5FF81] text-[#0A0A0A] hover:bg-transparent hover:text-[#B5FF81] border border-[#B5FF81]">
-            {isConnected ? "Wallet Connected" : "Connect Wallet"}
+            {isConnected ? `Connected to ${networkName}` : "Connect Wallet"}
           </Button>
           {isConnected && (
-            <Alert className="bg-transparent border border-[#B5FF81] text-[#B5FF81]">
-              <AlertTitle>Connected Wallets</AlertTitle>
-              <AlertDescription>{connectedWallets}</AlertDescription>
-            </Alert>
+            <div className="space-x-4">
+              <Button onClick={addParticipant} className="bg-[#B5FF81] text-[#0A0A0A] hover:bg-transparent hover:text-[#B5FF81] border border-[#B5FF81]">Add Participant</Button>
+              <Button onClick={startKeyGeneration} className="bg-[#B5FF81] text-[#0A0A0A] hover:bg-transparent hover:text-[#B5FF81] border border-[#B5FF81]">Start Key Generation</Button>
+            </div>
           )}
+          <ParticipantList participants={participants} connectedAddress={connectedAddress} />
+          <BenchmarkDisplay benchmarks={benchmarks} />
           <Alert variant={feedback.includes('Error') ? 'destructive' : 'default'} className="bg-transparent border border-[#B5FF81] text-[#B5FF81]">
             <AlertTitle>Status</AlertTitle>
             <AlertDescription>{feedback}</AlertDescription>
