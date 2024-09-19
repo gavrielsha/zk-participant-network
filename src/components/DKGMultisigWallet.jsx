@@ -14,7 +14,7 @@ const DKGMultisigWallet = () => {
   const [feedback, setFeedback] = useState('');
   const [contract, setContract] = useState(null);
   const [signer, setSigner] = useState(null);
-  const [benchmarks, setBenchmarks] = useState({ gas: 0, proofTime: 0 });
+  const [benchmarks, setBenchmarks] = useState({ gas: 0, proofTime: 0, memoryUsage: 0 });
   const [networkName, setNetworkName] = useState('');
   const [isConnected, setIsConnected] = useState(false);
 
@@ -57,7 +57,6 @@ const DKGMultisigWallet = () => {
         await addParticipant(address, contractInstance);
 
         setupEventListeners(contractInstance);
-        fetchParticipants(contractInstance);
       } catch (error) {
         console.error("Failed to connect to Ethereum:", error);
         setFeedback(`Failed to connect to Ethereum: ${error.message}. Make sure you have MetaMask installed and connected to the Sepolia testnet.`);
@@ -93,6 +92,7 @@ const DKGMultisigWallet = () => {
       const tx = await contractInstance.addParticipant(address);
       await tx.wait();
       setFeedback("You've been added as a participant successfully!");
+      fetchParticipants(contractInstance);
     } catch (error) {
       console.error("Error adding participant:", error);
       setFeedback(`Error: ${error.message}. Make sure your wallet is connected and you have enough ETH for gas.`);
@@ -108,16 +108,19 @@ const DKGMultisigWallet = () => {
     try {
       setFeedback("Initiating key generation... Please check your wallet for confirmation.");
       const startTime = performance.now();
+      const startMemory = performance.memory ? performance.memory.usedJSHeapSize : 0;
 
       const tx = await contract.generateKey();
       setFeedback("Key generation transaction sent. Waiting for confirmation...");
       
       const receipt = await tx.wait();
       const endTime = performance.now();
+      const endMemory = performance.memory ? performance.memory.usedJSHeapSize : 0;
 
       setBenchmarks({
         gas: receipt.gasUsed.toString(),
         proofTime: endTime - startTime,
+        memoryUsage: endMemory - startMemory,
       });
 
       setFeedback("Key generation completed successfully!");
