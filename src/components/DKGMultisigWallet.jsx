@@ -40,7 +40,7 @@ const DKGMultisigWallet = () => {
           });
         } catch (error) {
           console.error("Failed to connect to Ethereum:", error);
-          setFeedback("Failed to connect to Ethereum. Make sure you have MetaMask installed and connected to the Holešky testnet.");
+          setFeedback("Failed to connect to Ethereum. Make sure you have MetaMask installed and connected to the Sepolia testnet.");
         }
       } else {
         setFeedback("Please install MetaMask to interact with this dApp.");
@@ -168,7 +168,7 @@ const DKGMultisigWallet = () => {
             <AlertTitle>How to Use</AlertTitle>
             <AlertDescription>
               <ol className="list-decimal list-inside">
-                <li>Connect MetaMask to Holešky testnet</li>
+                <li>Connect MetaMask to Sepolia testnet</li>
                 <li>Enter participant address and click "Add Participant"</li>
                 <li>Once all participants are added, click "Start Key Generation"</li>
                 <li>Check benchmarks and generated public key</li>
