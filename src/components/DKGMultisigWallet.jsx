@@ -18,22 +18,6 @@ const DKGMultisigWallet = () => {
   const [isConnected, setIsConnected] = useState(false);
   const [connectionStatus, setConnectionStatus] = useState('Not connected');
 
-  useEffect(() => {
-    const initializeEthers = async () => {
-      if (typeof window.ethereum !== 'undefined') {
-        try {
-          const provider = new ethers.providers.Web3Provider(window.ethereum);
-          const network = await provider.getNetwork();
-          setNetworkName(network.name);
-        } catch (error) {
-          console.error("Failed to get network information:", error);
-        }
-      }
-    };
-
-    initializeEthers();
-  }, []);
-
   const connectWallet = async () => {
     if (typeof window.ethereum !== 'undefined') {
       try {
@@ -54,7 +38,8 @@ const DKGMultisigWallet = () => {
         setConnectionStatus('Wallet connected. Adding as participant...');
 
         // Automatically add the connected wallet as a participant
-        await addParticipant(await signer.getAddress());
+        const address = await signer.getAddress();
+        await addParticipant(address);
 
         setupEventListeners(contractInstance);
         await fetchParticipants(contractInstance);
