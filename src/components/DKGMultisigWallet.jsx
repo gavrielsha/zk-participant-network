@@ -65,25 +65,15 @@ const DKGMultisigWallet = () => {
     try {
       const participantList = await contractInstance.getParticipants();
       setParticipants(participantList);
-      updateFeedbackWithParticipantCount(participantList.length);
     } catch (error) {
       console.error("Error fetching participants:", error);
     }
-  };
-
-  const updateFeedbackWithParticipantCount = (count) => {
-    setFeedback(`Total participants: ${count}`);
   };
 
   const addParticipant = async (contractInstance, address) => {
     try {
       setFeedback("Adding you as a participant... Transaction sent.");
       const tx = await contractInstance.addParticipant(address);
-      
-      // Optimistically update the UI
-      setParticipants(prevParticipants => [...prevParticipants, address]);
-      updateFeedbackWithParticipantCount(participants.length + 1);
-
       await tx.wait();
       setFeedback("You have been added as a participant successfully!");
     } catch (error) {
@@ -106,11 +96,7 @@ const DKGMultisigWallet = () => {
       // Generate zkDKG proof
       const { proof, publicInputs } = await generateZKProof();
 
-      // Convert proof and publicInputs to the format expected by the smart contract
-      const proofBytes = ethers.utils.arrayify(proof);
-      const publicInputsBytes32 = publicInputs.map(input => ethers.utils.hexZeroPad(ethers.utils.hexlify(input), 32));
-
-      const tx = await contract.generateKey(proofBytes, publicInputsBytes32);
+      const tx = await contract.generateKey();
       const receipt = await tx.wait();
 
       const endTime = performance.now();
@@ -119,7 +105,7 @@ const DKGMultisigWallet = () => {
       setBenchmarks({
         gas: receipt.gasUsed.toString(),
         proofTime: endTime - startTime,
-        memoryUsage: Math.max(0, endMemory - startMemory), // Ensure non-negative value
+        memoryUsage: Math.max(0, endMemory - startMemory),
       });
 
       setFeedback("Key generation completed successfully!");
