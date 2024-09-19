@@ -33,7 +33,6 @@ const DKGMultisigWallet = () => {
         setContract(contractInstance);
 
         setIsConnected(true);
-        setFeedback("Wallet connected successfully!");
 
         const address = await signer.getAddress();
         setConnectedAddress(address);
@@ -54,7 +53,6 @@ const DKGMultisigWallet = () => {
 
   const setupEventListeners = (contractInstance) => {
     contractInstance.on("ParticipantAdded", (participant) => {
-      setFeedback(`Participant ${participant} added successfully!`);
       fetchParticipants(contractInstance);
     });
 
@@ -67,6 +65,7 @@ const DKGMultisigWallet = () => {
     try {
       const participantList = await contractInstance.getParticipants();
       setParticipants(participantList);
+      setFeedback(`You have been added as a participant successfully! Total participants: ${participantList.length}`);
     } catch (error) {
       console.error("Error fetching participants:", error);
     }
@@ -77,7 +76,6 @@ const DKGMultisigWallet = () => {
       setFeedback("Adding you as a participant... Please check your wallet for confirmation.");
       const tx = await contractInstance.addParticipant(address);
       await tx.wait();
-      setFeedback(`You have been added as a participant successfully! Total participants: ${participants.length + 1}`);
     } catch (error) {
       console.error("Error adding participant:", error);
       setFeedback(`Error: ${error.message}. Make sure you have enough ETH for gas.`);
@@ -124,11 +122,9 @@ const DKGMultisigWallet = () => {
           <Button onClick={connectWallet} disabled={isConnected} className="bg-[#B5FF81] text-[#0A0A0A] hover:bg-transparent hover:text-[#B5FF81] border border-[#B5FF81]">
             {isConnected ? `Connected to ${networkName}` : "Connect Wallet"}
           </Button>
-          {isConnected && (
-            <div className="space-x-4">
-              <Button onClick={startKeyGeneration} className="bg-[#B5FF81] text-[#0A0A0A] hover:bg-transparent hover:text-[#B5FF81] border border-[#B5FF81]">Start Key Generation</Button>
-            </div>
-          )}
+          <Button onClick={startKeyGeneration} disabled={!isConnected} className="bg-[#B5FF81] text-[#0A0A0A] hover:bg-transparent hover:text-[#B5FF81] border border-[#B5FF81]">
+            Start Key Generation
+          </Button>
           <ParticipantList participants={participants} connectedAddress={connectedAddress} />
           <BenchmarkDisplay benchmarks={benchmarks} />
           <Alert variant={feedback.includes('Error') ? 'destructive' : 'default'} className="bg-transparent border border-[#B5FF81] text-[#B5FF81]">
