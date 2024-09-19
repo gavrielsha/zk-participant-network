@@ -10,11 +10,15 @@ const BenchmarkDisplay = ({ benchmarks }) => {
     return (memory / 1024 / 1024).toFixed(2);
   };
 
+  const formatGas = (gas) => {
+    return (gas / 1000).toFixed(2);
+  };
+
   return (
     <Alert className="bg-transparent border border-[#B5FF81] text-[#B5FF81]">
       <AlertTitle>Benchmarks</AlertTitle>
       <AlertDescription>
-        <div>Gas Used: {benchmarks.gas} wei</div>
+        <div>Gas Used: {formatGas(benchmarks.gas)} kgas</div>
         <div>Proof Generation Time: {formatTime(benchmarks.proofTime)} ms</div>
         <div>Memory Usage: {formatMemory(benchmarks.memoryUsage)} MB</div>
       </AlertDescription>

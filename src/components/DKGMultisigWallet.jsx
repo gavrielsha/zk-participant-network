@@ -53,12 +53,11 @@ const DKGMultisigWallet = () => {
         setIsConnected(true);
         setFeedback("Wallet connected successfully!");
 
-        // Add the connected wallet address as a participant
         const address = await signer.getAddress();
         setConnectedAddress(address);
-        await addParticipant(address, contractInstance);
 
         setupEventListeners(contractInstance);
+        fetchParticipants(contractInstance);
       } catch (error) {
         console.error("Failed to connect to Ethereum:", error);
         setFeedback(`Failed to connect to Ethereum: ${error.message}. Make sure you have MetaMask installed and connected to the Sepolia testnet.`);
@@ -77,6 +76,10 @@ const DKGMultisigWallet = () => {
     contractInstance.on("KeyGenerated", (generatedKey) => {
       setFeedback('Key generated successfully!');
     });
+
+    contractInstance.on("ProofSubmitted", (participant) => {
+      setFeedback(`Proof submitted by ${participant} successfully!`);
+    });
   };
 
   const fetchParticipants = async (contractInstance) => {
@@ -88,13 +91,18 @@ const DKGMultisigWallet = () => {
     }
   };
 
-  const addParticipant = async (address, contractInstance) => {
+  const addParticipant = async () => {
+    if (!isConnected) {
+      setFeedback("Please connect your wallet first.");
+      return;
+    }
+
     try {
       setFeedback("Adding you as a participant... Please check your wallet for confirmation.");
-      const tx = await contractInstance.addParticipant(address);
+      const tx = await contract.addParticipant(connectedAddress);
       await tx.wait();
-      setFeedback("You've been added as a participant successfully!");
-      fetchParticipants(contractInstance);
+      setFeedback("Transaction sent. Waiting for confirmation...");
+      // The ParticipantAdded event will trigger a refresh of the participant list
     } catch (error) {
       console.error("Error adding participant:", error);
       setFeedback(`Error: ${error.message}. Make sure your wallet is connected and you have enough ETH for gas.`);
@@ -119,10 +127,14 @@ const DKGMultisigWallet = () => {
       const endMemory = performance.memory ? performance.memory.usedJSHeapSize : 0;
 
       // Generate a mock proof (this should be replaced with actual zk-SNARK proof generation)
-      const mockProof = ethers.utils.randomBytes(32);
+      const mockProof = {
+        a: [ethers.BigNumber.from(ethers.utils.randomBytes(32)), ethers.BigNumber.from(ethers.utils.randomBytes(32))],
+        b: [[ethers.BigNumber.from(ethers.utils.randomBytes(32)), ethers.BigNumber.from(ethers.utils.randomBytes(32))], [ethers.BigNumber.from(ethers.utils.randomBytes(32)), ethers.BigNumber.from(ethers.utils.randomBytes(32))]],
+        c: [ethers.BigNumber.from(ethers.utils.randomBytes(32)), ethers.BigNumber.from(ethers.utils.randomBytes(32))]
+      };
 
-      // Upload the proof to the network
-      const tx = await contract.submitProof(mockProof);
+      // Submit the proof to the network
+      const tx = await contract.submitProof(mockProof.a, mockProof.b, mockProof.c);
       const receipt = await tx.wait();
 
       setBenchmarks({
@@ -148,6 +160,7 @@ const DKGMultisigWallet = () => {
           <NetworkStatus isConnected={isConnected} networkName={networkName} />
           <WalletConnection networkName={networkName} isConnected={isConnected} onConnect={connectWallet} />
           <div className="space-x-4">
+            <Button onClick={addParticipant} className="bg-[#B5FF81] text-[#0A0A0A] hover:bg-transparent hover:text-[#B5FF81] border border-[#B5FF81]">Add Participant</Button>
             <Button onClick={startKeyGeneration} className="bg-[#B5FF81] text-[#0A0A0A] hover:bg-transparent hover:text-[#B5FF81] border border-[#B5FF81]">Start Key Generation</Button>
           </div>
           <ParticipantList participants={participants} connectedAddress={connectedAddress} />
