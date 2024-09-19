@@ -56,6 +56,10 @@ const DKGMultisigWallet = () => {
         setIsConnected(true);
         setFeedback("Wallet connected successfully!");
 
+        // Add the connected wallet address as a participant
+        const address = await signer.getAddress();
+        await addParticipant(address);
+
         setupEventListeners(contractInstance);
         fetchParticipants(contractInstance);
       } catch (error) {
@@ -89,20 +93,24 @@ const DKGMultisigWallet = () => {
     }
   };
 
-  const addParticipant = async () => {
+  const addParticipant = async (address) => {
     if (!isConnected) {
       setFeedback("Please connect your wallet first.");
       return;
     }
 
-    if (participantAddress.trim() === '') {
+    if (!address) {
+      address = participantAddress;
+    }
+
+    if (address.trim() === '') {
       setFeedback("Please enter a valid address");
       return;
     }
 
     try {
       setFeedback("Initiating transaction... Please check your wallet for confirmation.");
-      const tx = await contract.addParticipant(participantAddress);
+      const tx = await contract.addParticipant(address);
       setFeedback("Transaction sent. Waiting for confirmation...");
       
       const receipt = await tx.wait();
@@ -172,7 +180,7 @@ const DKGMultisigWallet = () => {
             />
           </div>
           <div className="space-x-4">
-            <Button onClick={addParticipant} className="bg-[#B5FF81] text-[#0A0A0A] hover:bg-transparent hover:text-[#B5FF81] border border-[#B5FF81]">Add Participant</Button>
+            <Button onClick={() => addParticipant()} className="bg-[#B5FF81] text-[#0A0A0A] hover:bg-transparent hover:text-[#B5FF81] border border-[#B5FF81]">Add Participant</Button>
             <Button onClick={startKeyGeneration} className="bg-[#B5FF81] text-[#0A0A0A] hover:bg-transparent hover:text-[#B5FF81] border border-[#B5FF81]">Start Key Generation</Button>
           </div>
           <ParticipantList participants={participants} />
