@@ -5,8 +5,6 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-
-// Import the ABI of your deployed contract
 import DKGMultisigWalletABI from '../contracts/DKGMultisigWallet.json';
 
 const DKGMultisigWallet = () => {
@@ -29,12 +27,10 @@ const DKGMultisigWallet = () => {
           const signer = provider.getSigner();
           setSigner(signer);
 
-          // Replace with your deployed contract address
           const contractAddress = "YOUR_CONTRACT_ADDRESS";
           const contractInstance = new ethers.Contract(contractAddress, DKGMultisigWalletABI.abi, signer);
           setContract(contractInstance);
 
-          // Listen for events
           contractInstance.on("ParticipantAdded", (participant) => {
             setParticipants(prevParticipants => [...prevParticipants, participant]);
             setFeedback(`Participant ${participant} added successfully!`);
@@ -80,8 +76,6 @@ const DKGMultisigWallet = () => {
       const receipt = await tx.wait();
       
       setGasUsed(receipt.gasUsed.toString());
-      // Note: Actual proof time and memory usage would require additional instrumentation
-      // These are placeholders and should be replaced with actual measurements
       setProofTime(Math.random() * 10); // Replace with actual proof time measurement
       setMemoryUsage(Math.floor(Math.random() * 500) + 100); // Replace with actual memory usage measurement
       
@@ -105,8 +99,6 @@ const DKGMultisigWallet = () => {
       const receipt = await tx.wait();
       
       setGasUsed(receipt.gasUsed.toString());
-      // Note: Actual proof time and memory usage would require additional instrumentation
-      // These are placeholders and should be replaced with actual measurements
       setProofTime(Math.random() * 10); // Replace with actual proof time measurement
       setMemoryUsage(Math.floor(Math.random() * 500) + 100); // Replace with actual memory usage measurement
     } catch (error) {
