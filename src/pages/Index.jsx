@@ -9,21 +9,16 @@ const Index = () => {
       <div className="mt-8 text-center max-w-2xl">
         <h2 className="text-2xl font-semibold mb-4">How to Use:</h2>
         <ol className="text-left list-decimal pl-6 space-y-2">
-          <li>Install MetaMask browser extension if you haven't already</li>
-          <li>Connect MetaMask to the Goerli testnet:
-            <ul className="list-disc pl-6 mt-2">
-              <li>Open MetaMask</li>
-              <li>Click on the network dropdown at the top</li>
-              <li>Select "Goerli Test Network"</li>
-            </ul>
-          </li>
-          <li>Ensure you have some Goerli ETH (you can get it from a faucet)</li>
-          <li>Deploy the smart contract to Goerli testnet (see deployment instructions)</li>
-          <li>Enter the deployed contract address in the "Contract Address" field</li>
-          <li>Click "Initialize Contract" to connect to the deployed contract</li>
-          <li>Add participants by entering their Ethereum addresses</li>
-          <li>Generate keys using the provided button</li>
+          <li>Enter any string as a participant "address" in the input field</li>
+          <li>Click "Add Participant" to add the participant to the list</li>
+          <li>Repeat steps 1-2 to add multiple participants</li>
+          <li>Click "Generate Key" to simulate the DKG process</li>
+          <li>Observe the generated mock public key</li>
         </ol>
+        <p className="mt-4">
+          Note: This is a simplified local simulation. In a real DKG implementation, 
+          the process would involve complex cryptographic operations and blockchain interactions.
+        </p>
       </div>
     </div>
   );
