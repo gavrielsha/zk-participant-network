@@ -30,13 +30,24 @@ contract DKGMultisigWallet {
         emit ParticipantAdded(participant);
     }
 
-    function generateKey() public {
+    function generateKey(bytes memory proof, bytes32[] memory publicInputs) public {
         require(round == 0, "Key generation already started");
         require(participantList.length >= threshold, "Not enough participants");
+        
+        // Verify the zkSNARK proof here (placeholder for actual verification)
+        bool isProofValid = verifyProof(proof, publicInputs);
+        require(isProofValid, "Invalid zkSNARK proof");
+
         round = 1;
-        // In a real implementation, we would combine the proofs here
-        groupPublicKey = keccak256(abi.encodePacked(block.timestamp, participantList.length));
+        // In a real implementation, we would use the verified public inputs to set the group public key
+        groupPublicKey = keccak256(abi.encodePacked(publicInputs));
         emit KeyGenerated(groupPublicKey);
+    }
+
+    function verifyProof(bytes memory proof, bytes32[] memory publicInputs) internal pure returns (bool) {
+        // Placeholder for actual zkSNARK verification logic
+        // In a real implementation, this would use a zkSNARK verification contract or library
+        return true;
     }
 
     function getParticipants() public view returns (address[] memory) {

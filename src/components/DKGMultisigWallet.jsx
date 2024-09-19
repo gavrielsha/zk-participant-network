@@ -103,9 +103,14 @@ const DKGMultisigWallet = () => {
       const startTime = performance.now();
       const startMemory = performance.memory ? performance.memory.usedJSHeapSize : 0;
 
-      // Implement the zkDKG key generation process
+      // Generate zkDKG proof
       const { proof, publicInputs } = await generateZKProof();
-      const tx = await contract.generateKey(proof, publicInputs);
+
+      // Convert proof and publicInputs to the format expected by the smart contract
+      const proofBytes = ethers.utils.arrayify(proof);
+      const publicInputsBytes32 = publicInputs.map(input => ethers.utils.hexZeroPad(ethers.utils.hexlify(input), 32));
+
+      const tx = await contract.generateKey(proofBytes, publicInputsBytes32);
       const receipt = await tx.wait();
 
       const endTime = performance.now();
