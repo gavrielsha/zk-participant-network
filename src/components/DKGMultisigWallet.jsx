@@ -44,10 +44,8 @@ const DKGMultisigWallet = () => {
         
         // Check if the user is already a participant
         const isAlreadyParticipant = participants.some(p => p.toLowerCase() === address.toLowerCase());
-        if (!isAlreadyParticipant) {
-          await addParticipant(contractInstance, address);
-        } else {
-          setIsParticipant(true);
+        setIsParticipant(isAlreadyParticipant);
+        if (isAlreadyParticipant) {
           setFeedback("You are already a participant.");
         }
       } catch (error) {
@@ -83,15 +81,25 @@ const DKGMultisigWallet = () => {
     }
   };
 
-  const addParticipant = async (contractInstance, address) => {
+  const addParticipant = async () => {
+    if (!isConnected) {
+      setFeedback("Please connect your wallet first.");
+      return;
+    }
+
+    if (isParticipant) {
+      setFeedback("You are already a participant.");
+      return;
+    }
+
     try {
       setIsAddingParticipant(true);
       setFeedback("Adding you as a participant... Transaction sent.");
       
       // Optimistically update the UI
-      setParticipants(prevParticipants => [...prevParticipants, address]);
+      setParticipants(prevParticipants => [...prevParticipants, connectedAddress]);
       
-      const tx = await contractInstance.addParticipant(address);
+      const tx = await contract.addParticipant(connectedAddress);
       await tx.wait();
       
       setIsParticipant(true);
@@ -101,7 +109,7 @@ const DKGMultisigWallet = () => {
       setFeedback(`Error: ${error.message}. Make sure you have enough ETH for gas.`);
       
       // Revert the optimistic update
-      setParticipants(prevParticipants => prevParticipants.filter(p => p !== address));
+      setParticipants(prevParticipants => prevParticipants.filter(p => p !== connectedAddress));
     } finally {
       setIsAddingParticipant(false);
     }
@@ -114,7 +122,7 @@ const DKGMultisigWallet = () => {
     }
 
     if (!isParticipant) {
-      setFeedback("Please wait until you're added as a participant.");
+      setFeedback("Please add yourself as a participant first.");
       return;
     }
 
@@ -153,7 +161,10 @@ const DKGMultisigWallet = () => {
             <Button onClick={connectWallet} disabled={isConnected} className="bg-[#B5FF81] text-[#0A0A0A] hover:bg-transparent hover:text-[#B5FF81] border border-[#B5FF81]">
               {isConnected ? `Connected to ${networkName}` : "Connect Wallet"}
             </Button>
-            <Button onClick={startKeyGeneration} disabled={!isConnected || !isParticipant || isAddingParticipant} className="bg-[#B5FF81] text-[#0A0A0A] hover:bg-transparent hover:text-[#B5FF81] border border-[#B5FF81]">
+            <Button onClick={addParticipant} disabled={!isConnected || isParticipant || isAddingParticipant} className="bg-[#B5FF81] text-[#0A0A0A] hover:bg-transparent hover:text-[#B5FF81] border border-[#B5FF81]">
+              Add as Participant
+            </Button>
+            <Button onClick={startKeyGeneration} disabled={!isConnected || !isParticipant} className="bg-[#B5FF81] text-[#0A0A0A] hover:bg-transparent hover:text-[#B5FF81] border border-[#B5FF81]">
               Start Key Generation
             </Button>
           </div>
