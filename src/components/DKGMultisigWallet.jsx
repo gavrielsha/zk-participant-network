@@ -6,7 +6,7 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import DKGMultisigWalletABI from '../contracts/DKGMultisigWallet.json';
 import ParticipantList from './ParticipantList';
 import BenchmarkDisplay from './BenchmarkDisplay';
-import { measureZoKratesPerformance } from '../utils/zoKratesUtils';
+import { performZKDKG } from '../utils/zkDKGUtils';
 
 const DKGMultisigWallet = () => {
   const [participants, setParticipants] = useState([]);
@@ -103,18 +103,14 @@ const DKGMultisigWallet = () => {
     try {
       setFeedback("Initiating key generation...");
       
-      // Measure ZoKrates performance
-      const { gas, proofTime, memoryUsage } = await measureZoKratesPerformance();
-
-      // Generate key on the smart contract
-      const tx = await contract.generateKey();
-      const receipt = await tx.wait();
+      // Perform ZKDKG and measure performance
+      const { gas, proofTime, memoryUsage } = await performZKDKG(contract, signer);
 
       // Update benchmarks with accurate measurements
       setBenchmarks({
-        gas: (gas / 1000).toFixed(2), // Convert to kgas
+        gas: gas.toFixed(2),
         proofTime: proofTime.toFixed(2),
-        memoryUsage: memoryUsage,
+        memoryUsage: memoryUsage.toFixed(2),
       });
 
       setFeedback("Key generation completed successfully!");
