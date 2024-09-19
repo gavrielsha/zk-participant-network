@@ -15,6 +15,7 @@ const DKGMultisigWallet = () => {
   const [contract, setContract] = useState(null);
   const [signer, setSigner] = useState(null);
   const [benchmarks, setBenchmarks] = useState({ gas: 0, proofTime: 0, memory: 0 });
+  const [networkName, setNetworkName] = useState('');
 
   useEffect(() => {
     const initializeEthers = async () => {
@@ -24,6 +25,9 @@ const DKGMultisigWallet = () => {
           const provider = new ethers.providers.Web3Provider(window.ethereum);
           const signer = provider.getSigner();
           setSigner(signer);
+
+          const network = await provider.getNetwork();
+          setNetworkName(network.name);
 
           const contractAddress = "0x1234567890123456789012345678901234567890"; // Replace with your actual deployed contract address
           const contractInstance = new ethers.Contract(contractAddress, DKGMultisigWalletABI.abi, signer);
@@ -40,7 +44,7 @@ const DKGMultisigWallet = () => {
           });
         } catch (error) {
           console.error("Failed to connect to Ethereum:", error);
-          setFeedback("Failed to connect to Ethereum. Make sure you have MetaMask installed and connected to the Sepolia testnet.");
+          setFeedback(`Failed to connect to Ethereum: ${error.message}. Make sure you have MetaMask installed and connected to the Sepolia testnet.`);
         }
       } else {
         setFeedback("Please install MetaMask to interact with this dApp.");
@@ -68,11 +72,12 @@ const DKGMultisigWallet = () => {
     }
 
     try {
+      setFeedback("Initiating transaction... Please check your wallet for confirmation.");
       const startTime = performance.now();
       const startMemory = window.performance.memory ? window.performance.memory.usedJSHeapSize : 0;
 
       const tx = await contract.addParticipant(participantAddress);
-      setFeedback("Adding participant... Please wait for transaction confirmation.");
+      setFeedback("Transaction sent. Waiting for confirmation...");
       
       const receipt = await tx.wait();
       const endTime = performance.now();
@@ -85,9 +90,10 @@ const DKGMultisigWallet = () => {
       });
 
       setParticipantAddress('');
+      setFeedback("Participant added successfully!");
     } catch (error) {
       console.error("Error adding participant:", error);
-      setFeedback(`Error: ${error.message}`);
+      setFeedback(`Error: ${error.message}. Make sure your wallet is connected and you have enough ETH for gas.`);
     }
   };
 
@@ -98,11 +104,12 @@ const DKGMultisigWallet = () => {
     }
 
     try {
+      setFeedback("Initiating key generation... Please check your wallet for confirmation.");
       const startTime = performance.now();
       const startMemory = window.performance.memory ? window.performance.memory.usedJSHeapSize : 0;
 
       const tx = await contract.startKeyGeneration();
-      setFeedback("Starting key generation... Please wait for transaction confirmation.");
+      setFeedback("Key generation transaction sent. Waiting for confirmation...");
       
       const receipt = await tx.wait();
       const endTime = performance.now();
@@ -113,19 +120,25 @@ const DKGMultisigWallet = () => {
         proofTime: (endTime - startTime).toFixed(2),
         memory: ((endMemory - startMemory) / (1024 * 1024)).toFixed(2)
       });
+
+      setFeedback("Key generation completed successfully!");
     } catch (error) {
       console.error("Error starting key generation:", error);
-      setFeedback(`Error: ${error.message}`);
+      setFeedback(`Error: ${error.message}. Make sure your wallet is connected and you have enough ETH for gas.`);
     }
   };
 
   return (
     <Card className="w-full max-w-md">
       <CardHeader>
-        <CardTitle>zk-SNARKs DKG Multisig Wallet</CardTitle>
+        <CardTitle>zk-SNARKs DKG Multisig Wallet (Sepolia Testnet)</CardTitle>
       </CardHeader>
       <CardContent>
         <div className="space-y-4">
+          <Alert>
+            <AlertTitle>Current Network</AlertTitle>
+            <AlertDescription>{networkName || 'Not connected'}</AlertDescription>
+          </Alert>
           <div>
             <Label htmlFor="participant-address">Participant Address</Label>
             <Input
@@ -168,11 +181,24 @@ const DKGMultisigWallet = () => {
             <AlertTitle>How to Use</AlertTitle>
             <AlertDescription>
               <ol className="list-decimal list-inside">
-                <li>Connect MetaMask to Sepolia testnet</li>
+                <li>Ensure MetaMask is installed and connected to Sepolia testnet</li>
+                <li>If using MetaMask mobile, open the app and connect to the dApp</li>
                 <li>Enter participant address and click "Add Participant"</li>
+                <li>Confirm the transaction in your MetaMask wallet</li>
                 <li>Once all participants are added, click "Start Key Generation"</li>
                 <li>Check benchmarks and generated public key</li>
               </ol>
+            </AlertDescription>
+          </Alert>
+          <Alert>
+            <AlertTitle>Troubleshooting</AlertTitle>
+            <AlertDescription>
+              <ul className="list-disc list-inside">
+                <li>Ensure you're connected to Sepolia testnet</li>
+                <li>Check if you have enough Sepolia ETH for gas</li>
+                <li>If using mobile, try refreshing the dApp or reconnecting your wallet</li>
+                <li>For persistent issues, check the browser console for errors</li>
+              </ul>
             </AlertDescription>
           </Alert>
         </div>
