@@ -87,21 +87,13 @@ const DKGMultisigWallet = () => {
     try {
       setIsAddingParticipant(true);
       setFeedback("Adding you as a participant... Transaction sent.");
-      
-      // Optimistically update the UI
-      setParticipants(prevParticipants => [...prevParticipants, address]);
-      
       const tx = await contractInstance.addParticipant(address);
       await tx.wait();
-      
       setIsParticipant(true);
       setFeedback("You have been added as a participant successfully!");
     } catch (error) {
       console.error("Error adding participant:", error);
       setFeedback(`Error: ${error.message}. Make sure you have enough ETH for gas.`);
-      
-      // Revert the optimistic update
-      setParticipants(prevParticipants => prevParticipants.filter(p => p !== address));
     } finally {
       setIsAddingParticipant(false);
     }
@@ -129,10 +121,13 @@ const DKGMultisigWallet = () => {
       const endTime = performance.now();
       const endMemory = performance.memory ? performance.memory.usedJSHeapSize : 0;
 
+      // Calculate memory usage, ensuring it's non-negative
+      const memoryUsage = Math.max(0, endMemory - startMemory);
+
       setBenchmarks({
         gas: receipt.gasUsed.toString(),
         proofTime: endTime - startTime,
-        memoryUsage: Math.max(0, endMemory - startMemory),
+        memoryUsage: memoryUsage,
       });
 
       setFeedback("Key generation completed successfully!");
