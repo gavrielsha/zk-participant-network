@@ -73,6 +73,7 @@ const DKGMultisigWallet = () => {
       setParticipants(participantList);
     } catch (error) {
       console.error("Error fetching participants:", error);
+      setFeedback(`Error fetching participants: ${error.message}`);
     }
   };
 
