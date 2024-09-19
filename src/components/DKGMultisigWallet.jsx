@@ -19,41 +19,51 @@ const DKGMultisigWallet = () => {
   const [signer, setSigner] = useState(null);
   const [benchmarks, setBenchmarks] = useState({ gas: 0, proofTime: 0, memory: 0 });
   const [networkName, setNetworkName] = useState('');
+  const [isConnected, setIsConnected] = useState(false);
 
   useEffect(() => {
     const initializeEthers = async () => {
       if (typeof window.ethereum !== 'undefined') {
         try {
-          await window.ethereum.request({ method: 'eth_requestAccounts' });
           const provider = new ethers.providers.Web3Provider(window.ethereum);
-          const signer = provider.getSigner();
-          setSigner(signer);
-
           const network = await provider.getNetwork();
           setNetworkName(network.name);
-
-          const contractAddress = "0x1234567890123456789012345678901234567890"; // Replace with your actual deployed contract address
-          const contractInstance = new ethers.Contract(contractAddress, DKGMultisigWalletABI.abi, signer);
-          setContract(contractInstance);
-
-          setupEventListeners(contractInstance);
         } catch (error) {
-          console.error("Failed to connect to Ethereum:", error);
-          setFeedback(`Failed to connect to Ethereum: ${error.message}. Make sure you have MetaMask installed and connected to the Sepolia testnet.`);
+          console.error("Failed to get network information:", error);
         }
-      } else {
-        setFeedback("Please install MetaMask to interact with this dApp.");
       }
     };
 
     initializeEthers();
-
-    return () => {
-      if (contract) {
-        contract.removeAllListeners();
-      }
-    };
   }, []);
+
+  const connectWallet = async () => {
+    if (typeof window.ethereum !== 'undefined') {
+      try {
+        await window.ethereum.request({ method: 'eth_requestAccounts' });
+        const provider = new ethers.providers.Web3Provider(window.ethereum);
+        const signer = provider.getSigner();
+        setSigner(signer);
+
+        const network = await provider.getNetwork();
+        setNetworkName(network.name);
+
+        const contractAddress = "0x1234567890123456789012345678901234567890"; // Replace with your actual deployed contract address
+        const contractInstance = new ethers.Contract(contractAddress, DKGMultisigWalletABI.abi, signer);
+        setContract(contractInstance);
+
+        setIsConnected(true);
+        setFeedback("Wallet connected successfully!");
+
+        setupEventListeners(contractInstance);
+      } catch (error) {
+        console.error("Failed to connect to Ethereum:", error);
+        setFeedback(`Failed to connect to Ethereum: ${error.message}. Make sure you have MetaMask installed and connected to the Sepolia testnet.`);
+      }
+    } else {
+      setFeedback("Please install MetaMask to interact with this dApp.");
+    }
+  };
 
   const setupEventListeners = (contractInstance) => {
     contractInstance.on("ParticipantAdded", (participant) => {
@@ -68,8 +78,8 @@ const DKGMultisigWallet = () => {
   };
 
   const addParticipant = async () => {
-    if (!contract || !signer) {
-      setFeedback("Please connect to Ethereum first.");
+    if (!isConnected) {
+      setFeedback("Please connect your wallet first.");
       return;
     }
 
@@ -80,11 +90,31 @@ const DKGMultisigWallet = () => {
 
     try {
       setFeedback("Initiating transaction... Please check your wallet for confirmation.");
+      const tx = await contract.addParticipant(participantAddress);
+      setFeedback("Transaction sent. Waiting for confirmation...");
+      
+      const receipt = await tx.wait();
+      setParticipantAddress('');
+      setFeedback("Participant added successfully!");
+    } catch (error) {
+      console.error("Error adding participant:", error);
+      setFeedback(`Error: ${error.message}. Make sure your wallet is connected and you have enough ETH for gas.`);
+    }
+  };
+
+  const startKeyGeneration = async () => {
+    if (!isConnected) {
+      setFeedback("Please connect your wallet first.");
+      return;
+    }
+
+    try {
+      setFeedback("Initiating key generation... Please check your wallet for confirmation.");
       const startTime = performance.now();
       const startMemory = window.performance.memory ? window.performance.memory.usedJSHeapSize : 0;
 
-      const tx = await contract.addParticipant(participantAddress);
-      setFeedback("Transaction sent. Waiting for confirmation...");
+      const tx = await contract.generateKey();
+      setFeedback("Key generation transaction sent. Waiting for confirmation...");
       
       const receipt = await tx.wait();
       const endTime = performance.now();
@@ -96,26 +126,6 @@ const DKGMultisigWallet = () => {
         memory: ((endMemory - startMemory) / (1024 * 1024)).toFixed(2)
       });
 
-      setParticipantAddress('');
-      setFeedback("Participant added successfully!");
-    } catch (error) {
-      console.error("Error adding participant:", error);
-      setFeedback(`Error: ${error.message}. Make sure your wallet is connected and you have enough ETH for gas.`);
-    }
-  };
-
-  const startKeyGeneration = async () => {
-    if (!contract || !signer) {
-      setFeedback("Please connect to Ethereum first.");
-      return;
-    }
-
-    try {
-      setFeedback("Initiating key generation... Please check your wallet for confirmation.");
-      const tx = await contract.startKeyGeneration();
-      setFeedback("Key generation transaction sent. Waiting for confirmation...");
-      
-      await tx.wait();
       setFeedback("Key generation completed successfully!");
     } catch (error) {
       console.error("Error starting key generation:", error);
@@ -124,13 +134,13 @@ const DKGMultisigWallet = () => {
   };
 
   return (
-    <Card className="w-full max-w-md">
+    <Card className="w-full max-w-2xl bg-transparent border border-[#B5FF81] text-[#B5FF81]">
       <CardHeader>
         <CardTitle>zk-SNARKs DKG Multisig Wallet (Sepolia Testnet)</CardTitle>
       </CardHeader>
       <CardContent>
         <div className="space-y-4">
-          <WalletConnection networkName={networkName} />
+          <WalletConnection networkName={networkName} isConnected={isConnected} onConnect={connectWallet} />
           <div>
             <Label htmlFor="participant-address">Participant Address</Label>
             <Input
@@ -138,19 +148,20 @@ const DKGMultisigWallet = () => {
               value={participantAddress}
               onChange={(e) => setParticipantAddress(e.target.value)}
               placeholder="Enter Ethereum address"
+              className="bg-transparent border-[#B5FF81] text-[#B5FF81]"
             />
           </div>
-          <Button onClick={addParticipant}>Add Participant</Button>
-          <Button onClick={startKeyGeneration}>Start Key Generation</Button>
+          <Button onClick={addParticipant} className="bg-transparent border border-[#B5FF81] text-[#B5FF81] hover:bg-[#B5FF81] hover:text-black">Add Participant</Button>
+          <Button onClick={startKeyGeneration} className="bg-transparent border border-[#B5FF81] text-[#B5FF81] hover:bg-[#B5FF81] hover:text-black">Start Key Generation</Button>
           <ParticipantList participants={participants} />
           {publicKey && (
-            <Alert>
+            <Alert className="bg-transparent border border-[#B5FF81] text-[#B5FF81]">
               <AlertTitle>Generated Public Key</AlertTitle>
               <AlertDescription>{publicKey}</AlertDescription>
             </Alert>
           )}
           <BenchmarkDisplay benchmarks={benchmarks} />
-          <Alert variant={feedback.includes('Error') ? 'destructive' : 'default'}>
+          <Alert variant={feedback.includes('Error') ? 'destructive' : 'default'} className="bg-transparent border border-[#B5FF81] text-[#B5FF81]">
             <AlertTitle>Status</AlertTitle>
             <AlertDescription>{feedback}</AlertDescription>
           </Alert>

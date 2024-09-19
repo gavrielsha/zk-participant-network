@@ -3,7 +3,7 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 
 const ParticipantList = ({ participants }) => {
   return (
-    <Alert>
+    <Alert className="bg-transparent border border-[#B5FF81] text-[#B5FF81]">
       <AlertTitle>Participants</AlertTitle>
       <AlertDescription>
         Total: {participants.length}
