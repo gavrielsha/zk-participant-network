@@ -103,11 +103,11 @@ const DKGMultisigWallet = () => {
       setFeedback("Initiating key generation...");
       const startTime = performance.now();
 
-      // Simulate proof generation time (between 2 to 5 seconds)
-      const simulatedProofTime = Math.floor(Math.random() * (5000 - 2000 + 1) + 2000);
-      await new Promise(resolve => setTimeout(resolve, simulatedProofTime));
+      // Generate zk-SNARK proof (this is a placeholder, replace with actual proof generation)
+      const proof = await generateZkSnarkProof();
 
-      const tx = await contract.generateKey();
+      // Send transaction with the proof
+      const tx = await contract.generateKey(proof);
       const receipt = await tx.wait();
 
       const endTime = performance.now();
@@ -115,12 +115,15 @@ const DKGMultisigWallet = () => {
       // Use actual gas used from the transaction receipt
       const actualGasUsed = receipt.gasUsed.toNumber();
 
+      // Calculate actual proof time
+      const actualProofTime = endTime - startTime;
+
       // Simulate realistic memory usage (between 100 to 200 MB)
       const simulatedMemoryUsage = Math.floor(Math.random() * (200 - 100 + 1) + 100);
 
       setBenchmarks({
         gas: (actualGasUsed / 1000).toFixed(2), // Convert to kgas
-        proofTime: (endTime - startTime).toFixed(2),
+        proofTime: actualProofTime.toFixed(2),
         memoryUsage: simulatedMemoryUsage * 1024 * 1024, // Convert MB to bytes
       });
 
@@ -129,6 +132,14 @@ const DKGMultisigWallet = () => {
       console.error("Error in key generation process:", error);
       setFeedback(`Error: ${error.message}. Key generation failed.`);
     }
+  };
+
+  // Placeholder function for zk-SNARK proof generation
+  const generateZkSnarkProof = async () => {
+    // This is where you would implement the actual zk-SNARK proof generation
+    // For now, we'll just simulate a delay
+    await new Promise(resolve => setTimeout(resolve, 500)); // Simulate 500ms for proof generation
+    return "0x1234567890"; // Placeholder proof
   };
 
   return (
