@@ -103,11 +103,8 @@ const DKGMultisigWallet = () => {
       setFeedback("Initiating key generation...");
       const startTime = performance.now();
 
-      // Generate zk-SNARK proof (this is a placeholder, replace with actual proof generation)
-      const proof = await generateZkSnarkProof();
-
-      // Send transaction with the proof
-      const tx = await contract.generateKey(proof);
+      // Call the generateKey function without any arguments
+      const tx = await contract.generateKey();
       const receipt = await tx.wait();
 
       const endTime = performance.now();
@@ -118,13 +115,10 @@ const DKGMultisigWallet = () => {
       // Calculate actual proof time
       const actualProofTime = endTime - startTime;
 
-      // Simulate realistic memory usage (between 100 to 200 MB)
-      const simulatedMemoryUsage = Math.floor(Math.random() * (200 - 100 + 1) + 100);
-
       setBenchmarks({
         gas: (actualGasUsed / 1000).toFixed(2), // Convert to kgas
         proofTime: actualProofTime.toFixed(2),
-        memoryUsage: simulatedMemoryUsage * 1024 * 1024, // Convert MB to bytes
+        memoryUsage: 0, // We can't measure actual memory usage on the client side
       });
 
       setFeedback("Key generation completed successfully!");
@@ -132,14 +126,6 @@ const DKGMultisigWallet = () => {
       console.error("Error in key generation process:", error);
       setFeedback(`Error: ${error.message}. Key generation failed.`);
     }
-  };
-
-  // Placeholder function for zk-SNARK proof generation
-  const generateZkSnarkProof = async () => {
-    // This is where you would implement the actual zk-SNARK proof generation
-    // For now, we'll just simulate a delay
-    await new Promise(resolve => setTimeout(resolve, 500)); // Simulate 500ms for proof generation
-    return "0x1234567890"; // Placeholder proof
   };
 
   return (
