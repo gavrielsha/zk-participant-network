@@ -13,11 +13,12 @@ const Index = () => {
           <li>Click "Add Participant" to add the participant to the list</li>
           <li>Repeat steps 1-2 to add multiple participants</li>
           <li>Click "Generate Key" to simulate the DKG process</li>
-          <li>Observe the generated mock public key</li>
+          <li>Observe the generated mock public key and simulated performance metrics</li>
         </ol>
         <p className="mt-4">
           Note: This is a simplified local simulation. In a real DKG implementation, 
-          the process would involve complex cryptographic operations and blockchain interactions.
+          the process would involve complex cryptographic operations and actual blockchain interactions.
+          The performance metrics (gas, proof time, memory usage) are simulated for demonstration purposes.
         </p>
       </div>
     </div>
