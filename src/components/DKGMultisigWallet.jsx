@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 
-// Mock ABI for demonstration purposes
+// This ABI should match your deployed contract
 const contractABI = [
   "function addParticipant(address participant) public",
   "function generateKey() public",
@@ -19,6 +19,7 @@ const DKGMultisigWallet = () => {
   const [contract, setContract] = useState(null);
   const [account, setAccount] = useState('');
   const [participantAddress, setParticipantAddress] = useState('');
+  const [contractAddress, setContractAddress] = useState('');
   const [gasUsed, setGasUsed] = useState(0);
   const [proofTime, setProofTime] = useState(0);
   const [memoryUsage, setMemoryUsage] = useState(0);
@@ -30,12 +31,7 @@ const DKGMultisigWallet = () => {
         try {
           await window.ethereum.request({ method: 'eth_requestAccounts' });
           const provider = new ethers.providers.Web3Provider(window.ethereum);
-          const signer = provider.getSigner();
-          const contractAddress = "0x5FbDB2315678afecb367f032d93F642f64180aa3"; // Replace with your contract address
-          const contract = new ethers.Contract(contractAddress, contractABI, signer);
-          
           setProvider(provider);
-          setContract(contract);
 
           const accounts = await provider.listAccounts();
           setAccount(accounts[0]);
@@ -44,7 +40,7 @@ const DKGMultisigWallet = () => {
             setAccount(accounts[0]);
           });
 
-          setFeedback('Connected to MetaMask successfully!');
+          setFeedback('Connected to MetaMask successfully! Please enter the contract address.');
         } catch (error) {
           setFeedback('Error connecting to MetaMask: ' + error.message);
         }
@@ -56,9 +52,24 @@ const DKGMultisigWallet = () => {
     init();
   }, []);
 
+  const initializeContract = async () => {
+    if (!provider || !contractAddress) {
+      setFeedback('Please connect to MetaMask and enter a contract address.');
+      return;
+    }
+    try {
+      const signer = provider.getSigner();
+      const contract = new ethers.Contract(contractAddress, contractABI, signer);
+      setContract(contract);
+      setFeedback('Contract initialized successfully!');
+    } catch (error) {
+      setFeedback('Error initializing contract: ' + error.message);
+    }
+  };
+
   const addParticipant = async () => {
     if (!contract) {
-      setFeedback('Contract not initialized. Please make sure you are connected to MetaMask.');
+      setFeedback('Contract not initialized. Please enter the contract address and initialize.');
       return;
     }
     try {
@@ -80,7 +91,7 @@ const DKGMultisigWallet = () => {
 
   const generateKey = async () => {
     if (!contract) {
-      setFeedback('Contract not initialized. Please make sure you are connected to MetaMask.');
+      setFeedback('Contract not initialized. Please enter the contract address and initialize.');
       return;
     }
     try {
@@ -106,6 +117,16 @@ const DKGMultisigWallet = () => {
       </CardHeader>
       <CardContent>
         <div className="space-y-4">
+          <div>
+            <Label htmlFor="contract-address">Contract Address</Label>
+            <Input
+              id="contract-address"
+              value={contractAddress}
+              onChange={(e) => setContractAddress(e.target.value)}
+              placeholder="0x..."
+            />
+          </div>
+          <Button onClick={initializeContract}>Initialize Contract</Button>
           <div>
             <Label htmlFor="participant-address">Participant Address</Label>
             <Input
