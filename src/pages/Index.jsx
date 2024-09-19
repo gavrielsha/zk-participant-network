@@ -12,7 +12,6 @@ const Index = () => {
         <Instructions />
       </div>
     </div>
-  </div>
   );
 };
 
