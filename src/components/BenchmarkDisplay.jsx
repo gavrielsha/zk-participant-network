@@ -13,7 +13,7 @@ const BenchmarkDisplay = ({ benchmarks }) => {
   };
 
   const formatMemory = (memory) => {
-    const mb = memory / (1024 * 1024);
+    const mb = Math.max(0, memory / (1024 * 1024));
     return mb.toFixed(2);
   };
 
