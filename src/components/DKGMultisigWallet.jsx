@@ -10,7 +10,6 @@ import WalletConnection from './WalletConnection';
 import ParticipantList from './ParticipantList';
 import BenchmarkDisplay from './BenchmarkDisplay';
 import NetworkStatus from './NetworkStatus';
-import ZoKratesRunner from './ZoKratesRunner';
 
 const DKGMultisigWallet = () => {
   const [participants, setParticipants] = useState([]);
@@ -133,19 +132,17 @@ const DKGMultisigWallet = () => {
     try {
       setFeedback("Initiating key generation... Please check your wallet for confirmation.");
       const startTime = performance.now();
-      const startMemory = window.performance.memory ? window.performance.memory.usedJSHeapSize : 0;
 
       const tx = await contract.generateKey();
       setFeedback("Key generation transaction sent. Waiting for confirmation...");
       
       const receipt = await tx.wait();
       const endTime = performance.now();
-      const endMemory = window.performance.memory ? window.performance.memory.usedJSHeapSize : 0;
 
       setBenchmarks({
         gas: receipt.gasUsed.toString(),
         proofTime: endTime - startTime,
-        memory: ((endMemory - startMemory) / (1024 * 1024)).toFixed(2)
+        memory: 0 // We don't have access to memory usage in the browser
       });
 
       setFeedback("Key generation completed successfully!");
@@ -190,7 +187,6 @@ const DKGMultisigWallet = () => {
             <AlertTitle>Status</AlertTitle>
             <AlertDescription>{feedback}</AlertDescription>
           </Alert>
-          <ZoKratesRunner />
         </div>
       </CardContent>
     </Card>
