@@ -2,25 +2,21 @@ import React, { useState, useEffect } from 'react';
 import { ethers } from 'ethers';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import DKGMultisigWalletABI from '../contracts/DKGMultisigWallet.json';
-import WalletConnection from './WalletConnection';
 import ParticipantList from './ParticipantList';
 import BenchmarkDisplay from './BenchmarkDisplay';
-import NetworkStatus from './NetworkStatus';
+import DynamicTopBar from './DynamicTopBar';
 
 const DKGMultisigWallet = () => {
   const [participants, setParticipants] = useState([]);
-  const [participantAddress, setParticipantAddress] = useState('');
-  const [publicKey, setPublicKey] = useState('');
   const [feedback, setFeedback] = useState('');
   const [contract, setContract] = useState(null);
   const [signer, setSigner] = useState(null);
   const [benchmarks, setBenchmarks] = useState({ gas: 0, proofTime: 0, memory: 0 });
   const [networkName, setNetworkName] = useState('');
   const [isConnected, setIsConnected] = useState(false);
+  const [connectionStatus, setConnectionStatus] = useState('Not connected');
 
   useEffect(() => {
     const initializeEthers = async () => {
@@ -41,6 +37,7 @@ const DKGMultisigWallet = () => {
   const connectWallet = async () => {
     if (typeof window.ethereum !== 'undefined') {
       try {
+        setConnectionStatus('Connecting wallet...');
         await window.ethereum.request({ method: 'eth_requestAccounts' });
         const provider = new ethers.providers.Web3Provider(window.ethereum);
         const signer = provider.getSigner();
@@ -54,16 +51,21 @@ const DKGMultisigWallet = () => {
         setContract(contractInstance);
 
         setIsConnected(true);
-        setFeedback("Wallet connected successfully!");
+        setConnectionStatus('Wallet connected. Adding as participant...');
+
+        // Automatically add the connected wallet as a participant
+        await addParticipant(await signer.getAddress());
 
         setupEventListeners(contractInstance);
-        fetchParticipants(contractInstance);
+        await fetchParticipants(contractInstance);
+
+        setConnectionStatus('Connected and added as participant');
       } catch (error) {
         console.error("Failed to connect to Ethereum:", error);
-        setFeedback(`Failed to connect to Ethereum: ${error.message}. Make sure you have MetaMask installed and connected to the Sepolia testnet.`);
+        setConnectionStatus(`Error: ${error.message}`);
       }
     } else {
-      setFeedback("Please install MetaMask to interact with this dApp.");
+      setConnectionStatus("Please install MetaMask to interact with this dApp.");
     }
   };
 
@@ -75,7 +77,6 @@ const DKGMultisigWallet = () => {
     });
 
     contractInstance.on("KeyGenerated", (generatedKey) => {
-      setPublicKey(generatedKey);
       setFeedback('Key generated successfully!');
     });
   };
@@ -89,24 +90,18 @@ const DKGMultisigWallet = () => {
     }
   };
 
-  const addParticipant = async () => {
-    if (!isConnected) {
-      setFeedback("Please connect your wallet first.");
-      return;
-    }
-
-    if (participantAddress.trim() === '') {
-      setFeedback("Please enter a valid address");
+  const addParticipant = async (address) => {
+    if (!contract) {
+      setFeedback("Contract not initialized. Please connect your wallet first.");
       return;
     }
 
     try {
-      setFeedback("Initiating transaction... Please check your wallet for confirmation.");
-      const tx = await contract.addParticipant(participantAddress);
+      setFeedback("Adding participant... Please check your wallet for confirmation.");
+      const tx = await contract.addParticipant(address);
       setFeedback("Transaction sent. Waiting for confirmation...");
       
       const receipt = await tx.wait();
-      setParticipantAddress('');
       setFeedback("Participant added successfully!");
       
       // Update benchmarks
@@ -159,29 +154,16 @@ const DKGMultisigWallet = () => {
       </CardHeader>
       <CardContent>
         <div className="space-y-4">
-          <NetworkStatus isConnected={isConnected} networkName={networkName} />
-          <WalletConnection networkName={networkName} isConnected={isConnected} onConnect={connectWallet} />
-          <div>
-            <Label htmlFor="participant-address">Participant Address</Label>
-            <Input
-              id="participant-address"
-              value={participantAddress}
-              onChange={(e) => setParticipantAddress(e.target.value)}
-              placeholder="Enter Ethereum address"
-              className="bg-transparent border-[#B5FF81] text-[#B5FF81]"
-            />
-          </div>
+          <DynamicTopBar
+            isConnected={isConnected}
+            networkName={networkName}
+            connectionStatus={connectionStatus}
+            onConnect={connectWallet}
+          />
           <div className="space-x-4">
-            <Button onClick={addParticipant} className="bg-[#B5FF81] text-[#0A0A0A] hover:bg-transparent hover:text-[#B5FF81] border border-[#B5FF81]">Add Participant</Button>
             <Button onClick={startKeyGeneration} className="bg-[#B5FF81] text-[#0A0A0A] hover:bg-transparent hover:text-[#B5FF81] border border-[#B5FF81]">Start Key Generation</Button>
           </div>
           <ParticipantList participants={participants} />
-          {publicKey && (
-            <Alert className="bg-transparent border border-[#B5FF81] text-[#B5FF81]">
-              <AlertTitle>Generated Public Key</AlertTitle>
-              <AlertDescription>{publicKey}</AlertDescription>
-            </Alert>
-          )}
           <BenchmarkDisplay benchmarks={benchmarks} />
           <Alert variant={feedback.includes('Error') ? 'destructive' : 'default'} className="bg-transparent border border-[#B5FF81] text-[#B5FF81]">
             <AlertTitle>Status</AlertTitle>
