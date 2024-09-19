@@ -147,7 +147,7 @@ const DKGMultisigWallet = () => {
               Start Key Generation
             </Button>
           </div>
-          <ParticipantList participants={participants} connectedAddress={connectedAddress} />
+          <ParticipantList participants={participants} connectedAddress={connectedAddress} isConnected={isConnected} />
           <BenchmarkDisplay benchmarks={benchmarks} />
           <Alert variant={feedback.includes('Error') ? 'destructive' : 'default'} className="bg-transparent border border-[#B5FF81] text-[#B5FF81]">
             <AlertTitle>Status</AlertTitle>
