@@ -103,7 +103,9 @@ const DKGMultisigWallet = () => {
       const startTime = performance.now();
       const startMemory = performance.memory ? performance.memory.usedJSHeapSize : 0;
 
-      const tx = await contract.generateKey();
+      // Implement the zkDKG key generation process
+      const { proof, publicInputs } = await generateZKProof();
+      const tx = await contract.generateKey(proof, publicInputs);
       const receipt = await tx.wait();
 
       const endTime = performance.now();
@@ -112,7 +114,7 @@ const DKGMultisigWallet = () => {
       setBenchmarks({
         gas: receipt.gasUsed.toString(),
         proofTime: endTime - startTime,
-        memoryUsage: endMemory - startMemory,
+        memoryUsage: Math.max(0, endMemory - startMemory), // Ensure non-negative value
       });
 
       setFeedback("Key generation completed successfully!");
@@ -120,6 +122,19 @@ const DKGMultisigWallet = () => {
       console.error("Error in key generation process:", error);
       setFeedback(`Error: ${error.message}. Key generation failed.`);
     }
+  };
+
+  const generateZKProof = async () => {
+    // Implement the zkDKG proof generation logic here
+    // This is a placeholder implementation
+    return new Promise((resolve) => {
+      setTimeout(() => {
+        resolve({
+          proof: "0x1234567890abcdef",
+          publicInputs: ["0x1234", "0x5678"]
+        });
+      }, 1000); // Simulating proof generation time
+    });
   };
 
   return (
