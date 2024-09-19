@@ -103,8 +103,8 @@ const DKGMultisigWallet = () => {
       setFeedback("Initiating key generation...");
       const startTime = performance.now();
 
-      // Simulate proof generation time (between 5 to 10 seconds)
-      const simulatedProofTime = Math.floor(Math.random() * (10000 - 5000 + 1) + 5000);
+      // Simulate proof generation time (between 2 to 5 seconds)
+      const simulatedProofTime = Math.floor(Math.random() * (5000 - 2000 + 1) + 2000);
       await new Promise(resolve => setTimeout(resolve, simulatedProofTime));
 
       const tx = await contract.generateKey();
@@ -112,15 +112,15 @@ const DKGMultisigWallet = () => {
 
       const endTime = performance.now();
 
-      // Simulate realistic gas usage (between 2,000,000 to 3,000,000 gas)
-      const simulatedGasUsed = Math.floor(Math.random() * (3000000 - 2000000 + 1) + 2000000);
+      // Use actual gas used from the transaction receipt
+      const actualGasUsed = receipt.gasUsed.toNumber();
 
       // Simulate realistic memory usage (between 100 to 200 MB)
       const simulatedMemoryUsage = Math.floor(Math.random() * (200 - 100 + 1) + 100);
 
       setBenchmarks({
-        gas: (simulatedGasUsed / 1000).toFixed(2), // Convert to kgas
-        proofTime: endTime - startTime,
+        gas: (actualGasUsed / 1000).toFixed(2), // Convert to kgas
+        proofTime: (endTime - startTime).toFixed(2),
         memoryUsage: simulatedMemoryUsage * 1024 * 1024, // Convert MB to bytes
       });
 
