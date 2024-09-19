@@ -141,7 +141,7 @@ const DKGMultisigWallet = () => {
         <div className="space-y-4">
           <div className="space-x-4">
             <Button onClick={connectWallet} disabled={isConnected} className="bg-[#B5FF81] text-[#0A0A0A] hover:bg-transparent hover:text-[#B5FF81] border border-[#B5FF81]">
-              {isConnected ? `Connected to ${networkName}` : "Connect Wallet"}
+              {isConnected ? `Connected: ${connectedAddress.slice(0, 6)}...${connectedAddress.slice(-4)}` : "Connect Wallet"}
             </Button>
             <Button onClick={startKeyGeneration} disabled={!isConnected || !isParticipant} className="bg-[#B5FF81] text-[#0A0A0A] hover:bg-transparent hover:text-[#B5FF81] border border-[#B5FF81]">
               Start Key Generation
