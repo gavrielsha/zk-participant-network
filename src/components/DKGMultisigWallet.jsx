@@ -37,9 +37,6 @@ const DKGMultisigWallet = () => {
         const address = await signer.getAddress();
         setConnectedAddress(address);
 
-        // Automatically add the user as a participant
-        await addParticipant(contractInstance, address);
-
         setupEventListeners(contractInstance);
         fetchParticipants(contractInstance);
       } catch (error) {
@@ -70,12 +67,18 @@ const DKGMultisigWallet = () => {
     }
   };
 
-  const addParticipant = async (contractInstance, address) => {
+  const addParticipant = async () => {
+    if (!isConnected) {
+      setFeedback("Please connect your wallet first.");
+      return;
+    }
+
     try {
       setFeedback("Adding you as a participant... Transaction sent.");
-      const tx = await contractInstance.addParticipant(address);
+      const tx = await contract.addParticipant(connectedAddress);
       await tx.wait();
       setFeedback("You have been added as a participant successfully!");
+      fetchParticipants(contract);
     } catch (error) {
       console.error("Error adding participant:", error);
       setFeedback(`Error: ${error.message}. Make sure you have enough ETH for gas.`);
@@ -92,9 +95,6 @@ const DKGMultisigWallet = () => {
       setFeedback("Initiating key generation...");
       const startTime = performance.now();
       const startMemory = performance.memory ? performance.memory.usedJSHeapSize : 0;
-
-      // Generate zkDKG proof
-      const { proof, publicInputs } = await generateZKProof();
 
       const tx = await contract.generateKey();
       const receipt = await tx.wait();
@@ -115,19 +115,6 @@ const DKGMultisigWallet = () => {
     }
   };
 
-  const generateZKProof = async () => {
-    // Implement the zkDKG proof generation logic here
-    // This is a placeholder implementation
-    return new Promise((resolve) => {
-      setTimeout(() => {
-        resolve({
-          proof: "0x1234567890abcdef",
-          publicInputs: ["0x1234", "0x5678"]
-        });
-      }, 1000); // Simulating proof generation time
-    });
-  };
-
   return (
     <Card className="w-full max-w-4xl bg-transparent border border-[#B5FF81] text-[#B5FF81]">
       <CardHeader>
@@ -138,6 +125,9 @@ const DKGMultisigWallet = () => {
           <div className="space-x-4">
             <Button onClick={connectWallet} disabled={isConnected} className="bg-[#B5FF81] text-[#0A0A0A] hover:bg-transparent hover:text-[#B5FF81] border border-[#B5FF81]">
               {isConnected ? `Connected to ${networkName}` : "Connect Wallet"}
+            </Button>
+            <Button onClick={addParticipant} disabled={!isConnected} className="bg-[#B5FF81] text-[#0A0A0A] hover:bg-transparent hover:text-[#B5FF81] border border-[#B5FF81]">
+              Add Participant
             </Button>
             <Button onClick={startKeyGeneration} disabled={!isConnected} className="bg-[#B5FF81] text-[#0A0A0A] hover:bg-transparent hover:text-[#B5FF81] border border-[#B5FF81]">
               Start Key Generation
