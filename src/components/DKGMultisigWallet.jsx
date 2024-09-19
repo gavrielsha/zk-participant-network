@@ -41,11 +41,8 @@ const DKGMultisigWallet = () => {
         setupEventListeners(contractInstance);
         await fetchParticipants(contractInstance);
         
-        const isAlreadyParticipant = participants.some(p => p.toLowerCase() === address.toLowerCase());
-        setIsParticipant(isAlreadyParticipant);
-        if (isAlreadyParticipant) {
-          setFeedback("You are already a participant.");
-        }
+        // Automatically add the user as a participant after connecting
+        await addParticipant(contractInstance, address);
       } catch (error) {
         console.error("Failed to connect to Ethereum:", error);
         setFeedback(`Failed to connect to Ethereum: ${error.message}. Make sure you have MetaMask installed and connected to the Sepolia testnet.`);
@@ -78,20 +75,10 @@ const DKGMultisigWallet = () => {
     }
   };
 
-  const addParticipant = async () => {
-    if (!isConnected) {
-      setFeedback("Please connect your wallet first.");
-      return;
-    }
-
-    if (isParticipant) {
-      setFeedback("You are already a participant.");
-      return;
-    }
-
+  const addParticipant = async (contractInstance, address) => {
     try {
       setFeedback("Adding you as a participant... Transaction sent.");
-      const tx = await contract.addParticipant(connectedAddress);
+      const tx = await contractInstance.addParticipant(address);
       await tx.wait();
       setIsParticipant(true);
       setFeedback("You have been added as a participant successfully!");
@@ -154,9 +141,6 @@ const DKGMultisigWallet = () => {
           <div className="space-x-4">
             <Button onClick={connectWallet} disabled={isConnected} className="bg-[#B5FF81] text-[#0A0A0A] hover:bg-transparent hover:text-[#B5FF81] border border-[#B5FF81]">
               {isConnected ? `Connected: ${connectedAddress.slice(0, 6)}...${connectedAddress.slice(-4)}` : "Connect Wallet"}
-            </Button>
-            <Button onClick={addParticipant} disabled={!isConnected || isParticipant} className="bg-[#B5FF81] text-[#0A0A0A] hover:bg-transparent hover:text-[#B5FF81] border border-[#B5FF81]">
-              Add as Participant
             </Button>
             <Button onClick={startKeyGeneration} disabled={!isConnected || !isParticipant} className="bg-[#B5FF81] text-[#0A0A0A] hover:bg-transparent hover:text-[#B5FF81] border border-[#B5FF81]">
               Start Key Generation
