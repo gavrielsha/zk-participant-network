@@ -6,7 +6,6 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 
-// This ABI should match your deployed contract
 const contractABI = [
   "function addParticipant(address participant) public",
   "function generateKey() public",
@@ -14,14 +13,12 @@ const contractABI = [
   "event KeyGenerated(bytes32 publicKey)"
 ];
 
-// Pre-deployed contract address on Goerli testnet
-const GOERLI_CONTRACT_ADDRESS = "0x123456789..."; // Replace with actual deployed address
-
 const DKGMultisigWallet = () => {
   const [provider, setProvider] = useState(null);
   const [contract, setContract] = useState(null);
   const [account, setAccount] = useState('');
   const [participantAddress, setParticipantAddress] = useState('');
+  const [contractAddress, setContractAddress] = useState('');
   const [gasUsed, setGasUsed] = useState(0);
   const [proofTime, setProofTime] = useState(0);
   const [memoryUsage, setMemoryUsage] = useState(0);
@@ -47,8 +44,6 @@ const DKGMultisigWallet = () => {
           window.ethereum.on('accountsChanged', (accounts) => {
             setAccount(accounts[0]);
           });
-
-          initializeContract(provider);
         } catch (error) {
           setFeedback('Error connecting to MetaMask: ' + error.message);
         }
@@ -60,12 +55,16 @@ const DKGMultisigWallet = () => {
     init();
   }, []);
 
-  const initializeContract = async (provider) => {
+  const initializeContract = async () => {
+    if (!ethers.utils.isAddress(contractAddress)) {
+      setFeedback('Invalid contract address');
+      return;
+    }
     try {
       const signer = provider.getSigner();
-      const contract = new ethers.Contract(GOERLI_CONTRACT_ADDRESS, contractABI, signer);
+      const contract = new ethers.Contract(contractAddress, contractABI, signer);
       setContract(contract);
-      setFeedback('Connected to contract on Goerli testnet!');
+      setFeedback('Contract initialized successfully!');
     } catch (error) {
       setFeedback('Error initializing contract: ' + error.message);
     }
@@ -73,7 +72,11 @@ const DKGMultisigWallet = () => {
 
   const addParticipant = async () => {
     if (!contract) {
-      setFeedback('Contract not initialized. Please make sure you are connected to Goerli testnet.');
+      setFeedback('Contract not initialized. Please initialize the contract first.');
+      return;
+    }
+    if (!ethers.utils.isAddress(participantAddress)) {
+      setFeedback('Invalid participant address');
       return;
     }
     try {
@@ -94,7 +97,7 @@ const DKGMultisigWallet = () => {
 
   const generateKey = async () => {
     if (!contract) {
-      setFeedback('Contract not initialized. Please make sure you are connected to Goerli testnet.');
+      setFeedback('Contract not initialized. Please initialize the contract first.');
       return;
     }
     try {
@@ -126,6 +129,16 @@ const DKGMultisigWallet = () => {
               {account ? `Connected to ${account}` : 'Not connected to MetaMask'}
             </AlertDescription>
           </Alert>
+          <div>
+            <Label htmlFor="contract-address">Contract Address</Label>
+            <Input
+              id="contract-address"
+              value={contractAddress}
+              onChange={(e) => setContractAddress(e.target.value)}
+              placeholder="0x..."
+            />
+          </div>
+          <Button onClick={initializeContract}>Initialize Contract</Button>
           <div>
             <Label htmlFor="participant-address">Participant Address</Label>
             <Input

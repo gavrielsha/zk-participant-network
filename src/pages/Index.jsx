@@ -18,10 +18,11 @@ const Index = () => {
             </ul>
           </li>
           <li>Ensure you have some Goerli ETH (you can get it from a faucet)</li>
-          <li>Refresh this page and connect your MetaMask wallet</li>
-          <li>Once connected, you can interact with the DKG Multisig Wallet</li>
+          <li>Deploy the smart contract to Goerli testnet (see deployment instructions)</li>
+          <li>Enter the deployed contract address in the "Contract Address" field</li>
+          <li>Click "Initialize Contract" to connect to the deployed contract</li>
           <li>Add participants by entering their Ethereum addresses</li>
-          <li>Generate keys using the provided buttons</li>
+          <li>Generate keys using the provided button</li>
         </ol>
       </div>
     </div>
