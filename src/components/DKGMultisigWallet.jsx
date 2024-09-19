@@ -70,7 +70,7 @@ const DKGMultisigWallet = () => {
   const fetchParticipants = async (contractInstance) => {
     try {
       const participantList = await contractInstance.getParticipants();
-      setParticipants(participantList);
+      setParticipants(participantList || []);
     } catch (error) {
       console.error("Error fetching participants:", error);
       setFeedback(`Error fetching participants: ${error.message}`);
@@ -104,6 +104,10 @@ const DKGMultisigWallet = () => {
     try {
       setFeedback("Initiating key generation...");
       
+      if (!participants || participants.length === 0) {
+        throw new Error("No participants available for key generation.");
+      }
+
       // Perform ZKDKG and measure performance
       const { gas, proofTime, memoryUsage } = await performZKDKG(contract, signer);
 
