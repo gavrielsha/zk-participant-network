@@ -17,7 +17,6 @@ const DKGMultisigWallet = () => {
   const [isConnected, setIsConnected] = useState(false);
   const [connectedAddress, setConnectedAddress] = useState('');
   const [isParticipant, setIsParticipant] = useState(false);
-  const [isAddingParticipant, setIsAddingParticipant] = useState(false);
 
   const connectWallet = async () => {
     if (typeof window.ethereum !== 'undefined') {
@@ -65,7 +64,6 @@ const DKGMultisigWallet = () => {
       if (participant.toLowerCase() === connectedAddress.toLowerCase()) {
         setIsParticipant(true);
         setFeedback("You have been added as a participant successfully!");
-        setIsAddingParticipant(false);
       }
     });
 
@@ -85,25 +83,14 @@ const DKGMultisigWallet = () => {
 
   const addParticipant = async (contractInstance, address) => {
     try {
-      setIsAddingParticipant(true);
       setFeedback("Adding you as a participant... Transaction sent.");
-      
-      // Optimistically update the UI
-      setParticipants(prevParticipants => [...prevParticipants, address]);
-      
       const tx = await contractInstance.addParticipant(address);
       await tx.wait();
-      
       setIsParticipant(true);
       setFeedback("You have been added as a participant successfully!");
     } catch (error) {
       console.error("Error adding participant:", error);
       setFeedback(`Error: ${error.message}. Make sure you have enough ETH for gas.`);
-      
-      // Revert the optimistic update
-      setParticipants(prevParticipants => prevParticipants.filter(p => p !== address));
-    } finally {
-      setIsAddingParticipant(false);
     }
   };
 
@@ -153,7 +140,7 @@ const DKGMultisigWallet = () => {
             <Button onClick={connectWallet} disabled={isConnected} className="bg-[#B5FF81] text-[#0A0A0A] hover:bg-transparent hover:text-[#B5FF81] border border-[#B5FF81]">
               {isConnected ? `Connected to ${networkName}` : "Connect Wallet"}
             </Button>
-            <Button onClick={startKeyGeneration} disabled={!isConnected || !isParticipant || isAddingParticipant} className="bg-[#B5FF81] text-[#0A0A0A] hover:bg-transparent hover:text-[#B5FF81] border border-[#B5FF81]">
+            <Button onClick={startKeyGeneration} disabled={!isConnected || !isParticipant} className="bg-[#B5FF81] text-[#0A0A0A] hover:bg-transparent hover:text-[#B5FF81] border border-[#B5FF81]">
               Start Key Generation
             </Button>
           </div>
