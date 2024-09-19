@@ -17,6 +17,7 @@ const DKGMultisigWallet = () => {
   const [benchmarks, setBenchmarks] = useState({ gas: 0, proofTime: 0, memoryUsage: 0 });
   const [networkName, setNetworkName] = useState('');
   const [isConnected, setIsConnected] = useState(false);
+  const [connectedAddress, setConnectedAddress] = useState('');
 
   useEffect(() => {
     const initializeEthers = async () => {
@@ -54,6 +55,7 @@ const DKGMultisigWallet = () => {
 
         // Add the connected wallet address as a participant
         const address = await signer.getAddress();
+        setConnectedAddress(address);
         await addParticipant(address, contractInstance);
 
         setupEventListeners(contractInstance);
@@ -142,7 +144,7 @@ const DKGMultisigWallet = () => {
           <div className="space-x-4">
             <Button onClick={startKeyGeneration} className="bg-[#B5FF81] text-[#0A0A0A] hover:bg-transparent hover:text-[#B5FF81] border border-[#B5FF81]">Start Key Generation</Button>
           </div>
-          <ParticipantList participants={participants} />
+          <ParticipantList participants={participants} connectedAddress={connectedAddress} />
           <BenchmarkDisplay benchmarks={benchmarks} />
           <Alert variant={feedback.includes('Error') ? 'destructive' : 'default'} className="bg-transparent border border-[#B5FF81] text-[#B5FF81]">
             <AlertTitle>Status</AlertTitle>
