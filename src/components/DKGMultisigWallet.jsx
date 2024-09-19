@@ -16,6 +16,7 @@ const DKGMultisigWallet = () => {
   const [networkName, setNetworkName] = useState('');
   const [isConnected, setIsConnected] = useState(false);
   const [connectedAddress, setConnectedAddress] = useState('');
+  const [totalParticipants, setTotalParticipants] = useState(0);
 
   const connectWallet = async () => {
     if (typeof window.ethereum !== 'undefined') {
@@ -37,6 +38,9 @@ const DKGMultisigWallet = () => {
 
         const address = await signer.getAddress();
         setConnectedAddress(address);
+
+        // Automatically add the user as a participant
+        await addParticipant(contractInstance, address);
 
         setupEventListeners(contractInstance);
         fetchParticipants(contractInstance);
@@ -64,26 +68,21 @@ const DKGMultisigWallet = () => {
     try {
       const participantList = await contractInstance.getParticipants();
       setParticipants(participantList);
+      setTotalParticipants(participantList.length);
     } catch (error) {
       console.error("Error fetching participants:", error);
     }
   };
 
-  const addParticipant = async () => {
-    if (!isConnected) {
-      setFeedback("Please connect your wallet first.");
-      return;
-    }
-
+  const addParticipant = async (contractInstance, address) => {
     try {
       setFeedback("Adding you as a participant... Please check your wallet for confirmation.");
-      const tx = await contract.addParticipant(connectedAddress);
+      const tx = await contractInstance.addParticipant(address);
       await tx.wait();
-      setFeedback("Transaction sent. Waiting for confirmation...");
-      // The ParticipantAdded event will trigger a refresh of the participant list
+      setFeedback("You have been added as a participant successfully!");
     } catch (error) {
       console.error("Error adding participant:", error);
-      setFeedback(`Error: ${error.message}. Make sure your wallet is connected and you have enough ETH for gas.`);
+      setFeedback(`Error: ${error.message}. Make sure you have enough ETH for gas.`);
     }
   };
 
@@ -129,10 +128,13 @@ const DKGMultisigWallet = () => {
           </Button>
           {isConnected && (
             <div className="space-x-4">
-              <Button onClick={addParticipant} className="bg-[#B5FF81] text-[#0A0A0A] hover:bg-transparent hover:text-[#B5FF81] border border-[#B5FF81]">Add Participant</Button>
               <Button onClick={startKeyGeneration} className="bg-[#B5FF81] text-[#0A0A0A] hover:bg-transparent hover:text-[#B5FF81] border border-[#B5FF81]">Start Key Generation</Button>
             </div>
           )}
+          <Alert className="bg-transparent border border-[#B5FF81] text-[#B5FF81]">
+            <AlertTitle>Total Connected Wallets</AlertTitle>
+            <AlertDescription>{totalParticipants}</AlertDescription>
+          </Alert>
           <ParticipantList participants={participants} connectedAddress={connectedAddress} />
           <BenchmarkDisplay benchmarks={benchmarks} />
           <Alert variant={feedback.includes('Error') ? 'destructive' : 'default'} className="bg-transparent border border-[#B5FF81] text-[#B5FF81]">
