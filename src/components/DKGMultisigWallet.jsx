@@ -70,10 +70,12 @@ const DKGMultisigWallet = () => {
   const fetchParticipants = async (contractInstance) => {
     try {
       const participantList = await contractInstance.getParticipants();
+      console.log("Fetched participants:", participantList);
       setParticipants(participantList || []);
     } catch (error) {
       console.error("Error fetching participants:", error);
-      setFeedback(`Error fetching participants: ${error.message}`);
+      setFeedback(`Error fetching participants: ${error.message}. Please check your connection and contract deployment.`);
+      setParticipants([]); // Reset participants to an empty array on error
     }
   };
 
@@ -87,7 +89,7 @@ const DKGMultisigWallet = () => {
       await fetchParticipants(contractInstance);
     } catch (error) {
       console.error("Error adding participant:", error);
-      setFeedback(`Error: ${error.message}. Make sure you have enough ETH for gas.`);
+      setFeedback(`Error: ${error.message}. Make sure you have enough ETH for gas and you're not already a participant.`);
     }
   };
 
