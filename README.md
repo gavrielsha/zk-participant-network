@@ -19,10 +19,6 @@ The research explores zero-knowledge proof systems in the context of decentraliz
 8. **Test**: Run `go run main.go` to simulate the protocol.
 9. **Present**: Push to GitHub and deploy to a testnet.
 
-## Detailed Steps
-
-For a comprehensive guide on each step, including code snippets and explanations, please refer to the [project wiki](https://github.com/yourusername/zkDKG/wiki).
-
 ## Frontend
 
 The project includes a simple frontend to visualize ZoKrates commands. Run the application to interact with the ZoKrates Command Runner.
