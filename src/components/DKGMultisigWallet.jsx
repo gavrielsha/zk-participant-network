@@ -10,6 +10,7 @@ import WalletConnection from './WalletConnection';
 import ParticipantList from './ParticipantList';
 import BenchmarkDisplay from './BenchmarkDisplay';
 import NetworkStatus from './NetworkStatus';
+import ZoKratesRunner from './ZoKratesRunner';
 
 const DKGMultisigWallet = () => {
   const [participants, setParticipants] = useState([]);
@@ -71,6 +72,7 @@ const DKGMultisigWallet = () => {
     contractInstance.on("ParticipantAdded", (participant) => {
       setParticipants(prevParticipants => [...prevParticipants, participant]);
       setFeedback(`Participant ${participant} added successfully!`);
+      fetchParticipants(contractInstance);
     });
 
     contractInstance.on("KeyGenerated", (generatedKey) => {
@@ -142,7 +144,7 @@ const DKGMultisigWallet = () => {
 
       setBenchmarks({
         gas: receipt.gasUsed.toString(),
-        proofTime: (endTime - startTime).toFixed(2),
+        proofTime: endTime - startTime,
         memory: ((endMemory - startMemory) / (1024 * 1024)).toFixed(2)
       });
 
@@ -188,6 +190,7 @@ const DKGMultisigWallet = () => {
             <AlertTitle>Status</AlertTitle>
             <AlertDescription>{feedback}</AlertDescription>
           </Alert>
+          <ZoKratesRunner />
         </div>
       </CardContent>
     </Card>
