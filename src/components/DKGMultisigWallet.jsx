@@ -16,8 +16,6 @@ const DKGMultisigWallet = () => {
   const [networkName, setNetworkName] = useState('');
   const [isConnected, setIsConnected] = useState(false);
   const [connectedAddress, setConnectedAddress] = useState('');
-  const [isParticipant, setIsParticipant] = useState(false);
-  const [isAddingParticipant, setIsAddingParticipant] = useState(false);
 
   const connectWallet = async () => {
     if (typeof window.ethereum !== 'undefined') {
@@ -42,12 +40,8 @@ const DKGMultisigWallet = () => {
         setupEventListeners(contractInstance);
         await fetchParticipants(contractInstance);
         
-        // Check if the user is already a participant
-        const isAlreadyParticipant = participants.some(p => p.toLowerCase() === address.toLowerCase());
-        setIsParticipant(isAlreadyParticipant);
-        if (isAlreadyParticipant) {
-          setFeedback("You are already a participant.");
-        }
+        // Automatically add the user as a participant
+        await addParticipant(contractInstance, address);
       } catch (error) {
         console.error("Failed to connect to Ethereum:", error);
         setFeedback(`Failed to connect to Ethereum: ${error.message}. Make sure you have MetaMask installed and connected to the Sepolia testnet.`);
@@ -61,9 +55,7 @@ const DKGMultisigWallet = () => {
     contractInstance.on("ParticipantAdded", (participant) => {
       fetchParticipants(contractInstance);
       if (participant.toLowerCase() === connectedAddress.toLowerCase()) {
-        setIsParticipant(true);
         setFeedback("You have been added as a participant successfully!");
-        setIsAddingParticipant(false);
       }
     });
 
@@ -81,48 +73,20 @@ const DKGMultisigWallet = () => {
     }
   };
 
-  const addParticipant = async () => {
-    if (!isConnected) {
-      setFeedback("Please connect your wallet first.");
-      return;
-    }
-
-    if (isParticipant) {
-      setFeedback("You are already a participant.");
-      return;
-    }
-
+  const addParticipant = async (contractInstance, address) => {
     try {
-      setIsAddingParticipant(true);
       setFeedback("Adding you as a participant... Transaction sent.");
-      
-      // Optimistically update the UI
-      setParticipants(prevParticipants => [...prevParticipants, connectedAddress]);
-      
-      const tx = await contract.addParticipant(connectedAddress);
+      const tx = await contractInstance.addParticipant(address);
       await tx.wait();
-      
-      setIsParticipant(true);
-      setFeedback("You have been added as a participant successfully!");
     } catch (error) {
       console.error("Error adding participant:", error);
       setFeedback(`Error: ${error.message}. Make sure you have enough ETH for gas.`);
-      
-      // Revert the optimistic update
-      setParticipants(prevParticipants => prevParticipants.filter(p => p !== connectedAddress));
-    } finally {
-      setIsAddingParticipant(false);
     }
   };
 
   const startKeyGeneration = async () => {
     if (!isConnected) {
       setFeedback("Please connect your wallet first.");
-      return;
-    }
-
-    if (!isParticipant) {
-      setFeedback("Please add yourself as a participant first.");
       return;
     }
 
@@ -140,7 +104,7 @@ const DKGMultisigWallet = () => {
       setBenchmarks({
         gas: receipt.gasUsed.toString(),
         proofTime: endTime - startTime,
-        memoryUsage: Math.max(0, endMemory - startMemory),
+        memoryUsage: endMemory - startMemory,
       });
 
       setFeedback("Key generation completed successfully!");
@@ -161,10 +125,7 @@ const DKGMultisigWallet = () => {
             <Button onClick={connectWallet} disabled={isConnected} className="bg-[#B5FF81] text-[#0A0A0A] hover:bg-transparent hover:text-[#B5FF81] border border-[#B5FF81]">
               {isConnected ? `Connected to ${networkName}` : "Connect Wallet"}
             </Button>
-            <Button onClick={addParticipant} disabled={!isConnected || isParticipant || isAddingParticipant} className="bg-[#B5FF81] text-[#0A0A0A] hover:bg-transparent hover:text-[#B5FF81] border border-[#B5FF81]">
-              Add as Participant
-            </Button>
-            <Button onClick={startKeyGeneration} disabled={!isConnected || !isParticipant} className="bg-[#B5FF81] text-[#0A0A0A] hover:bg-transparent hover:text-[#B5FF81] border border-[#B5FF81]">
+            <Button onClick={startKeyGeneration} disabled={!isConnected} className="bg-[#B5FF81] text-[#0A0A0A] hover:bg-transparent hover:text-[#B5FF81] border border-[#B5FF81]">
               Start Key Generation
             </Button>
           </div>
