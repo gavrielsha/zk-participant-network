@@ -58,10 +58,6 @@ const DKGMultisigWallet = () => {
     contractInstance.on("KeyGenerated", (generatedKey) => {
       setFeedback('Key generated successfully!');
     });
-
-    contractInstance.on("ProofSubmitted", (participant) => {
-      setFeedback(`Proof submitted by ${participant} successfully!`);
-    });
   };
 
   const fetchParticipants = async (contractInstance) => {
@@ -102,18 +98,7 @@ const DKGMultisigWallet = () => {
       const startTime = performance.now();
       const startMemory = performance.memory ? performance.memory.usedJSHeapSize : 0;
 
-      // Simulate off-chain key generation
-      await new Promise(resolve => setTimeout(resolve, 2000)); // Simulating 2 seconds of computation
-
-      // Generate a mock proof (this should be replaced with actual zk-SNARK proof generation)
-      const mockProof = {
-        a: [ethers.BigNumber.from(ethers.utils.randomBytes(32)), ethers.BigNumber.from(ethers.utils.randomBytes(32))],
-        b: [[ethers.BigNumber.from(ethers.utils.randomBytes(32)), ethers.BigNumber.from(ethers.utils.randomBytes(32))], [ethers.BigNumber.from(ethers.utils.randomBytes(32)), ethers.BigNumber.from(ethers.utils.randomBytes(32))]],
-        c: [ethers.BigNumber.from(ethers.utils.randomBytes(32)), ethers.BigNumber.from(ethers.utils.randomBytes(32))]
-      };
-
-      // Submit the proof to the smart contract
-      const tx = await contract.submitProof(mockProof.a, mockProof.b, mockProof.c);
+      const tx = await contract.generateKey();
       const receipt = await tx.wait();
 
       const endTime = performance.now();
@@ -125,7 +110,7 @@ const DKGMultisigWallet = () => {
         memoryUsage: endMemory - startMemory,
       });
 
-      setFeedback("Key generation completed and proof submitted successfully!");
+      setFeedback("Key generation completed successfully!");
     } catch (error) {
       console.error("Error in key generation process:", error);
       setFeedback(`Error: ${error.message}. Key generation failed.`);
@@ -142,10 +127,12 @@ const DKGMultisigWallet = () => {
           <Button onClick={connectWallet} disabled={isConnected} className="bg-[#B5FF81] text-[#0A0A0A] hover:bg-transparent hover:text-[#B5FF81] border border-[#B5FF81]">
             {isConnected ? `Connected to ${networkName}` : "Connect Wallet"}
           </Button>
-          <div className="space-x-4">
-            <Button onClick={addParticipant} disabled={!isConnected} className="bg-[#B5FF81] text-[#0A0A0A] hover:bg-transparent hover:text-[#B5FF81] border border-[#B5FF81]">Add Participant</Button>
-            <Button onClick={startKeyGeneration} disabled={!isConnected} className="bg-[#B5FF81] text-[#0A0A0A] hover:bg-transparent hover:text-[#B5FF81] border border-[#B5FF81]">Start Key Generation</Button>
-          </div>
+          {isConnected && (
+            <div className="space-x-4">
+              <Button onClick={addParticipant} className="bg-[#B5FF81] text-[#0A0A0A] hover:bg-transparent hover:text-[#B5FF81] border border-[#B5FF81]">Add Participant</Button>
+              <Button onClick={startKeyGeneration} className="bg-[#B5FF81] text-[#0A0A0A] hover:bg-transparent hover:text-[#B5FF81] border border-[#B5FF81]">Start Key Generation</Button>
+            </div>
+          )}
           <ParticipantList participants={participants} connectedAddress={connectedAddress} />
           <BenchmarkDisplay benchmarks={benchmarks} />
           <Alert variant={feedback.includes('Error') ? 'destructive' : 'default'} className="bg-transparent border border-[#B5FF81] text-[#B5FF81]">

@@ -1,8 +1,6 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
-import "./ZoKratesVerifier.sol";
-
 contract DKGMultisigWallet {
     struct Participant {
         address addr;
@@ -14,16 +12,13 @@ contract DKGMultisigWallet {
     bytes32 public groupPublicKey;
     uint256 public threshold;
     uint256 public round;
-    ZoKratesVerifier public verifier;
 
     event ParticipantAdded(address participant);
     event KeyGenerated(bytes32 publicKey);
-    event ProofSubmitted(address participant);
 
-    constructor(uint256 _threshold, address _verifierAddress) {
+    constructor(uint256 _threshold) {
         threshold = _threshold;
         round = 0;
-        verifier = ZoKratesVerifier(_verifierAddress);
     }
 
     function addParticipant(address participant) public {
@@ -33,12 +28,6 @@ contract DKGMultisigWallet {
         participants[participant] = Participant(participant, true);
         participantList.push(participant);
         emit ParticipantAdded(participant);
-    }
-
-    function submitProof(uint[2] memory a, uint[2][2] memory b, uint[2] memory c) public {
-        require(participants[msg.sender].isActive, "Not a registered participant");
-        require(verifier.verifyTx(a, b, c, []), "ZKP verification failed");
-        emit ProofSubmitted(msg.sender);
     }
 
     function generateKey() public {
