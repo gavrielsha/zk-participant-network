@@ -37,6 +37,9 @@ const DKGMultisigWallet = () => {
         const address = await signer.getAddress();
         setConnectedAddress(address);
 
+        // Automatically add the user as a participant
+        await addParticipant(contractInstance, address);
+
         setupEventListeners(contractInstance);
         fetchParticipants(contractInstance);
       } catch (error) {
@@ -62,23 +65,27 @@ const DKGMultisigWallet = () => {
     try {
       const participantList = await contractInstance.getParticipants();
       setParticipants(participantList);
+      updateFeedbackWithParticipantCount(participantList.length);
     } catch (error) {
       console.error("Error fetching participants:", error);
     }
   };
 
-  const addParticipant = async () => {
-    if (!isConnected) {
-      setFeedback("Please connect your wallet first.");
-      return;
-    }
+  const updateFeedbackWithParticipantCount = (count) => {
+    setFeedback(`Total participants: ${count}`);
+  };
 
+  const addParticipant = async (contractInstance, address) => {
     try {
       setFeedback("Adding you as a participant... Transaction sent.");
-      const tx = await contract.addParticipant(connectedAddress);
+      const tx = await contractInstance.addParticipant(address);
+      
+      // Optimistically update the UI
+      setParticipants(prevParticipants => [...prevParticipants, address]);
+      updateFeedbackWithParticipantCount(participants.length + 1);
+
       await tx.wait();
       setFeedback("You have been added as a participant successfully!");
-      fetchParticipants(contract);
     } catch (error) {
       console.error("Error adding participant:", error);
       setFeedback(`Error: ${error.message}. Make sure you have enough ETH for gas.`);
@@ -96,7 +103,9 @@ const DKGMultisigWallet = () => {
       const startTime = performance.now();
       const startMemory = performance.memory ? performance.memory.usedJSHeapSize : 0;
 
-      const tx = await contract.generateKey();
+      // Implement the zkDKG key generation process
+      const { proof, publicInputs } = await generateZKProof();
+      const tx = await contract.generateKey(proof, publicInputs);
       const receipt = await tx.wait();
 
       const endTime = performance.now();
@@ -105,7 +114,7 @@ const DKGMultisigWallet = () => {
       setBenchmarks({
         gas: receipt.gasUsed.toString(),
         proofTime: endTime - startTime,
-        memoryUsage: Math.max(0, endMemory - startMemory),
+        memoryUsage: Math.max(0, endMemory - startMemory), // Ensure non-negative value
       });
 
       setFeedback("Key generation completed successfully!");
@@ -113,6 +122,19 @@ const DKGMultisigWallet = () => {
       console.error("Error in key generation process:", error);
       setFeedback(`Error: ${error.message}. Key generation failed.`);
     }
+  };
+
+  const generateZKProof = async () => {
+    // Implement the zkDKG proof generation logic here
+    // This is a placeholder implementation
+    return new Promise((resolve) => {
+      setTimeout(() => {
+        resolve({
+          proof: "0x1234567890abcdef",
+          publicInputs: ["0x1234", "0x5678"]
+        });
+      }, 1000); // Simulating proof generation time
+    });
   };
 
   return (
@@ -125,9 +147,6 @@ const DKGMultisigWallet = () => {
           <div className="space-x-4">
             <Button onClick={connectWallet} disabled={isConnected} className="bg-[#B5FF81] text-[#0A0A0A] hover:bg-transparent hover:text-[#B5FF81] border border-[#B5FF81]">
               {isConnected ? `Connected to ${networkName}` : "Connect Wallet"}
-            </Button>
-            <Button onClick={addParticipant} disabled={!isConnected} className="bg-[#B5FF81] text-[#0A0A0A] hover:bg-transparent hover:text-[#B5FF81] border border-[#B5FF81]">
-              Add Participant
             </Button>
             <Button onClick={startKeyGeneration} disabled={!isConnected} className="bg-[#B5FF81] text-[#0A0A0A] hover:bg-transparent hover:text-[#B5FF81] border border-[#B5FF81]">
               Start Key Generation
