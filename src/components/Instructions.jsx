@@ -3,7 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
 const Instructions = () => {
   return (
-    <Card className="mt-8 w-full max-w-3xl bg-transparent border border-[#B5FF81] text-[#B5FF81]">
+    <Card className="mt-8 w-full max-w-4xl bg-transparent border border-[#B5FF81] text-[#B5FF81]">
       <CardHeader>
         <CardTitle>How to Use</CardTitle>
       </CardHeader>

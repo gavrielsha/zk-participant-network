@@ -135,7 +135,7 @@ const DKGMultisigWallet = () => {
   };
 
   return (
-    <Card className="w-full max-w-3xl bg-transparent border border-[#B5FF81] text-[#B5FF81]">
+    <Card className="w-full max-w-4xl bg-transparent border border-[#B5FF81] text-[#B5FF81]">
       <CardHeader>
         <CardTitle>zk-SNARKs DKG Multisig Wallet (Sepolia Testnet)</CardTitle>
       </CardHeader>
@@ -153,8 +153,8 @@ const DKGMultisigWallet = () => {
               className="bg-transparent border-[#B5FF81] text-[#B5FF81]"
             />
           </div>
-          <Button onClick={addParticipant} className="bg-[#B5FF81] text-[#0A0A0A] hover:bg-[#92CC68]">Add Participant</Button>
-          <Button onClick={startKeyGeneration} className="bg-[#B5FF81] text-[#0A0A0A] hover:bg-[#92CC68]">Start Key Generation</Button>
+          <Button onClick={addParticipant} className="bg-[#B5FF81] text-[#0A0A0A] hover:bg-transparent hover:text-[#B5FF81] border border-[#B5FF81]">Add Participant</Button>
+          <Button onClick={startKeyGeneration} className="bg-[#B5FF81] text-[#0A0A0A] hover:bg-transparent hover:text-[#B5FF81] border border-[#B5FF81]">Start Key Generation</Button>
           <ParticipantList participants={participants} />
           {publicKey && (
             <Alert className="bg-transparent border border-[#B5FF81] text-[#B5FF81]">
