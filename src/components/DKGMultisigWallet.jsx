@@ -118,18 +118,18 @@ const DKGMultisigWallet = () => {
       const endTime = performance.now();
       const endMemory = performance.memory ? performance.memory.usedJSHeapSize : 0;
 
-      setBenchmarks({
-        gas: 0, // No gas used for off-chain computation
-        proofTime: endTime - startTime,
-        memoryUsage: endMemory - startMemory,
-      });
-
       // Generate a mock proof (this should be replaced with actual zk-SNARK proof generation)
       const mockProof = ethers.utils.randomBytes(32);
 
       // Upload the proof to the network
       const tx = await contract.submitProof(mockProof);
-      await tx.wait();
+      const receipt = await tx.wait();
+
+      setBenchmarks({
+        gas: receipt.gasUsed.toString(),
+        proofTime: endTime - startTime,
+        memoryUsage: endMemory - startMemory,
+      });
 
       setFeedback("Key generation completed and proof submitted successfully!");
     } catch (error) {
