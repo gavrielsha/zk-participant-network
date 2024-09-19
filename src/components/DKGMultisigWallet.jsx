@@ -14,12 +14,14 @@ const contractABI = [
   "event KeyGenerated(bytes32 publicKey)"
 ];
 
+// Pre-deployed contract address on Goerli testnet
+const GOERLI_CONTRACT_ADDRESS = "0x123456789..."; // Replace with actual deployed address
+
 const DKGMultisigWallet = () => {
   const [provider, setProvider] = useState(null);
   const [contract, setContract] = useState(null);
   const [account, setAccount] = useState('');
   const [participantAddress, setParticipantAddress] = useState('');
-  const [contractAddress, setContractAddress] = useState('');
   const [gasUsed, setGasUsed] = useState(0);
   const [proofTime, setProofTime] = useState(0);
   const [memoryUsage, setMemoryUsage] = useState(0);
@@ -33,6 +35,12 @@ const DKGMultisigWallet = () => {
           const provider = new ethers.providers.Web3Provider(window.ethereum);
           setProvider(provider);
 
+          const network = await provider.getNetwork();
+          if (network.name !== 'goerli') {
+            setFeedback('Please switch to the Goerli testnet in MetaMask.');
+            return;
+          }
+
           const accounts = await provider.listAccounts();
           setAccount(accounts[0]);
 
@@ -40,7 +48,7 @@ const DKGMultisigWallet = () => {
             setAccount(accounts[0]);
           });
 
-          setFeedback('Connected to MetaMask successfully! Please enter the contract address.');
+          initializeContract(provider);
         } catch (error) {
           setFeedback('Error connecting to MetaMask: ' + error.message);
         }
@@ -52,16 +60,12 @@ const DKGMultisigWallet = () => {
     init();
   }, []);
 
-  const initializeContract = async () => {
-    if (!provider || !contractAddress) {
-      setFeedback('Please connect to MetaMask and enter a contract address.');
-      return;
-    }
+  const initializeContract = async (provider) => {
     try {
       const signer = provider.getSigner();
-      const contract = new ethers.Contract(contractAddress, contractABI, signer);
+      const contract = new ethers.Contract(GOERLI_CONTRACT_ADDRESS, contractABI, signer);
       setContract(contract);
-      setFeedback('Contract initialized successfully!');
+      setFeedback('Connected to contract on Goerli testnet!');
     } catch (error) {
       setFeedback('Error initializing contract: ' + error.message);
     }
@@ -69,7 +73,7 @@ const DKGMultisigWallet = () => {
 
   const addParticipant = async () => {
     if (!contract) {
-      setFeedback('Contract not initialized. Please enter the contract address and initialize.');
+      setFeedback('Contract not initialized. Please make sure you are connected to Goerli testnet.');
       return;
     }
     try {
@@ -81,8 +85,7 @@ const DKGMultisigWallet = () => {
 
       setGasUsed(receipt.gasUsed.toString());
       setProofTime(endTime - startTime);
-      // For memory usage, we'd typically need backend integration. This is a mock value.
-      setMemoryUsage(Math.random() * 100);
+      setMemoryUsage(Math.random() * 100); // Mock value
       setFeedback('Participant added successfully!');
     } catch (error) {
       setFeedback('Error: ' + error.message);
@@ -91,7 +94,7 @@ const DKGMultisigWallet = () => {
 
   const generateKey = async () => {
     if (!contract) {
-      setFeedback('Contract not initialized. Please enter the contract address and initialize.');
+      setFeedback('Contract not initialized. Please make sure you are connected to Goerli testnet.');
       return;
     }
     try {
@@ -103,7 +106,7 @@ const DKGMultisigWallet = () => {
 
       setGasUsed(receipt.gasUsed.toString());
       setProofTime(endTime - startTime);
-      setMemoryUsage(Math.random() * 100);
+      setMemoryUsage(Math.random() * 100); // Mock value
       setFeedback('Key generated successfully!');
     } catch (error) {
       setFeedback('Error: ' + error.message);
@@ -113,20 +116,16 @@ const DKGMultisigWallet = () => {
   return (
     <Card className="w-full max-w-3xl">
       <CardHeader>
-        <CardTitle>zk-SNARKs DKG Multisig Wallet</CardTitle>
+        <CardTitle>zk-SNARKs DKG Multisig Wallet (Goerli Testnet)</CardTitle>
       </CardHeader>
       <CardContent>
         <div className="space-y-4">
-          <div>
-            <Label htmlFor="contract-address">Contract Address</Label>
-            <Input
-              id="contract-address"
-              value={contractAddress}
-              onChange={(e) => setContractAddress(e.target.value)}
-              placeholder="0x..."
-            />
-          </div>
-          <Button onClick={initializeContract}>Initialize Contract</Button>
+          <Alert>
+            <AlertTitle>Connection Status</AlertTitle>
+            <AlertDescription>
+              {account ? `Connected to ${account}` : 'Not connected to MetaMask'}
+            </AlertDescription>
+          </Alert>
           <div>
             <Label htmlFor="participant-address">Participant Address</Label>
             <Input
@@ -141,7 +140,6 @@ const DKGMultisigWallet = () => {
           <Alert>
             <AlertTitle>Wallet Information</AlertTitle>
             <AlertDescription>
-              <p>Connected Account: {account || 'Not connected'}</p>
               <p>Gas Used: {gasUsed}</p>
               <p>Proof Time: {proofTime.toFixed(2)} ms</p>
               <p>Memory Usage: {memoryUsage.toFixed(2)} MB</p>
