@@ -57,6 +57,7 @@ const DKGMultisigWallet = () => {
         setFeedback("Wallet connected successfully!");
 
         setupEventListeners(contractInstance);
+        fetchParticipants(contractInstance);
       } catch (error) {
         console.error("Failed to connect to Ethereum:", error);
         setFeedback(`Failed to connect to Ethereum: ${error.message}. Make sure you have MetaMask installed and connected to the Sepolia testnet.`);
@@ -78,6 +79,15 @@ const DKGMultisigWallet = () => {
     });
   };
 
+  const fetchParticipants = async (contractInstance) => {
+    try {
+      const participantList = await contractInstance.getParticipants();
+      setParticipants(participantList);
+    } catch (error) {
+      console.error("Error fetching participants:", error);
+    }
+  };
+
   const addParticipant = async () => {
     if (!isConnected) {
       setFeedback("Please connect your wallet first.");
@@ -97,6 +107,15 @@ const DKGMultisigWallet = () => {
       const receipt = await tx.wait();
       setParticipantAddress('');
       setFeedback("Participant added successfully!");
+      
+      // Update benchmarks
+      setBenchmarks(prevBenchmarks => ({
+        ...prevBenchmarks,
+        gas: receipt.gasUsed.toString(),
+      }));
+
+      // Fetch updated participant list
+      fetchParticipants(contract);
     } catch (error) {
       console.error("Error adding participant:", error);
       setFeedback(`Error: ${error.message}. Make sure your wallet is connected and you have enough ETH for gas.`);

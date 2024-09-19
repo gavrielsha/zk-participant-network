@@ -6,7 +6,7 @@ const ParticipantList = ({ participants }) => {
     <Alert className="bg-transparent border border-[#B5FF81] text-[#B5FF81]">
       <AlertTitle>Participants</AlertTitle>
       <AlertDescription>
-        Total: {participants.length}
+        <div>Total: {participants.length}</div>
         {participants.map((p, index) => (
           <div key={index}>{p}</div>
         ))}
