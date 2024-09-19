@@ -40,7 +40,7 @@ const DKGMultisigWallet = () => {
           });
         } catch (error) {
           console.error("Failed to connect to Ethereum:", error);
-          setFeedback("Failed to connect to Ethereum. Make sure you have MetaMask installed and connected to the Goerli testnet.");
+          setFeedback("Failed to connect to Ethereum. Make sure you have MetaMask installed and connected to the Holešky testnet.");
         }
       } else {
         setFeedback("Please install MetaMask to interact with this dApp.");
@@ -163,6 +163,17 @@ const DKGMultisigWallet = () => {
           <Alert variant={feedback.includes('Error') ? 'destructive' : 'default'}>
             <AlertTitle>Status</AlertTitle>
             <AlertDescription>{feedback}</AlertDescription>
+          </Alert>
+          <Alert>
+            <AlertTitle>How to Use</AlertTitle>
+            <AlertDescription>
+              <ol className="list-decimal list-inside">
+                <li>Connect MetaMask to Holešky testnet</li>
+                <li>Enter participant address and click "Add Participant"</li>
+                <li>Once all participants are added, click "Start Key Generation"</li>
+                <li>Check benchmarks and generated public key</li>
+              </ol>
+            </AlertDescription>
           </Alert>
         </div>
       </CardContent>
