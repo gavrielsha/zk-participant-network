@@ -6,6 +6,7 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import DKGMultisigWalletABI from '../contracts/DKGMultisigWallet.json';
 import ParticipantList from './ParticipantList';
 import BenchmarkDisplay from './BenchmarkDisplay';
+import { measureZoKratesPerformance } from '../utils/zoKratesUtils';
 
 const DKGMultisigWallet = () => {
   const [participants, setParticipants] = useState([]);
@@ -101,27 +102,19 @@ const DKGMultisigWallet = () => {
 
     try {
       setFeedback("Initiating key generation...");
-      const startTime = performance.now();
+      
+      // Measure ZoKrates performance
+      const { gas, proofTime, memoryUsage } = await measureZoKratesPerformance();
 
-      // Simulate proof generation time (between 5 to 10 seconds)
-      const simulatedProofTime = Math.floor(Math.random() * (10000 - 5000 + 1) + 5000);
-      await new Promise(resolve => setTimeout(resolve, simulatedProofTime));
-
+      // Generate key on the smart contract
       const tx = await contract.generateKey();
       const receipt = await tx.wait();
 
-      const endTime = performance.now();
-
-      // Simulate realistic gas usage (between 2,000,000 to 3,000,000 gas)
-      const simulatedGasUsed = Math.floor(Math.random() * (3000000 - 2000000 + 1) + 2000000);
-
-      // Simulate realistic memory usage (between 100 to 200 MB)
-      const simulatedMemoryUsage = Math.floor(Math.random() * (200 - 100 + 1) + 100);
-
+      // Update benchmarks with accurate measurements
       setBenchmarks({
-        gas: (simulatedGasUsed / 1000).toFixed(2), // Convert to kgas
-        proofTime: endTime - startTime,
-        memoryUsage: simulatedMemoryUsage * 1024 * 1024, // Convert MB to bytes
+        gas: (gas / 1000).toFixed(2), // Convert to kgas
+        proofTime: proofTime.toFixed(2),
+        memoryUsage: memoryUsage,
       });
 
       setFeedback("Key generation completed successfully!");
