@@ -38,13 +38,13 @@ export const performZKDKG = async (contract, signer) => {
   const proofTime = (endTime - startTime) / 1000; // Convert to seconds
 
   // Get gas used from the transaction receipt
-  const gasUsed = receipt.gasUsed.toNumber();
+  const gasUsed = ethers.utils.formatUnits(receipt.gasUsed, 'gwei');
 
   // Estimate memory usage (this is a placeholder, replace with actual measurement if possible)
   const memoryUsage = performance.memory ? performance.memory.usedJSHeapSize / (1024 * 1024) : 0;
 
   return {
-    gas: gasUsed,
+    gas: parseFloat(gasUsed) / 1000, // Convert to kgas
     proofTime: proofTime,
     memoryUsage: memoryUsage
   };
