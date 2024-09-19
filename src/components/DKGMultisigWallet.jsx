@@ -89,13 +89,9 @@ const DKGMultisigWallet = () => {
   };
 
   const estimateMemoryUsage = () => {
-    const memoryInfo = window.performance.memory;
-    if (memoryInfo) {
-      // Convert bytes to MB
-      return Math.round(memoryInfo.usedJSHeapSize / (1024 * 1024));
-    }
-    // Fallback estimation if performance.memory is not available
-    return Math.floor(Math.random() * 50) + 100; // Random value between 100-150 MB
+    const totalRAM = navigator.deviceMemory || 4; // Default to 4GB if deviceMemory is not available
+    const estimatedUsage = Math.floor(totalRAM * 0.1); // Estimate 10% of total RAM
+    return estimatedUsage;
   };
 
   const simulateProofGeneration = async () => {
@@ -132,8 +128,8 @@ const DKGMultisigWallet = () => {
 
       const endTime = performance.now();
 
-      // Use actual gas used from the transaction receipt
-      const actualGasUsed = receipt.gasUsed.toNumber();
+      // Convert gas used to kGas
+      const gasUsedInKGas = receipt.gasUsed.toNumber() / 1000;
 
       // Calculate actual transaction time
       const actualTransactionTime = endTime - startTime;
@@ -142,7 +138,7 @@ const DKGMultisigWallet = () => {
       const estimatedMemoryUsage = estimateMemoryUsage();
 
       setBenchmarks({
-        gas: actualGasUsed,
+        gas: gasUsedInKGas.toFixed(2),
         proofTime: proofTime,
         memoryUsage: estimatedMemoryUsage,
         transactionTime: actualTransactionTime,
