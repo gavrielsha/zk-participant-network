@@ -11,7 +11,7 @@ const ParticipantList = ({ participants, connectedAddress }) => {
         {participants.map((p, index) => (
           <div key={index} className="flex items-center">
             <CheckCircle className="mr-2 h-4 w-4" />
-            {p} {p.toLowerCase() === connectedAddress.toLowerCase() ? ' (You)' : ''}
+            {p.slice(0, 6)}...{p.slice(-4)} {p.toLowerCase() === connectedAddress.toLowerCase() ? ' (You)' : ''}
           </div>
         ))}
       </AlertDescription>
