@@ -2,7 +2,7 @@ const hre = require("hardhat");
 
 async function main() {
   const DKGMultisigWallet = await hre.ethers.getContractFactory("DKGMultisigWallet");
-  const dkgMultisigWallet = await DKGMultisigWallet.deploy();
+  const dkgMultisigWallet = await DKGMultisigWallet.deploy(3); // Deploy with a threshold of 3 participants
 
   await dkgMultisigWallet.deployed();
 
