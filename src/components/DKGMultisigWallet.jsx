@@ -153,8 +153,10 @@ const DKGMultisigWallet = () => {
               className="bg-transparent border-[#B5FF81] text-[#B5FF81]"
             />
           </div>
-          <Button onClick={addParticipant} className="bg-[#B5FF81] text-[#0A0A0A] hover:bg-transparent hover:text-[#B5FF81] border border-[#B5FF81]">Add Participant</Button>
-          <Button onClick={startKeyGeneration} className="bg-[#B5FF81] text-[#0A0A0A] hover:bg-transparent hover:text-[#B5FF81] border border-[#B5FF81]">Start Key Generation</Button>
+          <div className="space-x-4">
+            <Button onClick={addParticipant} className="bg-[#B5FF81] text-[#0A0A0A] hover:bg-transparent hover:text-[#B5FF81] border border-[#B5FF81]">Add Participant</Button>
+            <Button onClick={startKeyGeneration} className="bg-[#B5FF81] text-[#0A0A0A] hover:bg-transparent hover:text-[#B5FF81] border border-[#B5FF81]">Start Key Generation</Button>
+          </div>
           <ParticipantList participants={participants} />
           {publicKey && (
             <Alert className="bg-transparent border border-[#B5FF81] text-[#B5FF81]">
