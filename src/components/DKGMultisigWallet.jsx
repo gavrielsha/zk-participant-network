@@ -5,7 +5,20 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import DKGMultisigWalletABI from '../contracts/DKGMultisigWallet.json';
+
+const DKGMultisigWalletABI = [
+  "function addParticipant(address participant) public",
+  "function submitCommitment(bytes32 commitment) public",
+  "function submitShare(bytes32 share) public",
+  "function startKeyGeneration() public",
+  "function advanceRound() public",
+  "function getParticipants() public view returns (address[] memory)",
+  "function getRound() public view returns (uint256)",
+  "event ParticipantAdded(address participant)",
+  "event CommitmentSubmitted(address participant, bytes32 commitment)",
+  "event ShareSubmitted(address participant, bytes32 share)",
+  "event KeyGenerated(bytes32 publicKey)"
+];
 
 const DKGMultisigWallet = () => {
   const [participants, setParticipants] = useState([]);
@@ -13,8 +26,7 @@ const DKGMultisigWallet = () => {
   const [publicKey, setPublicKey] = useState('');
   const [feedback, setFeedback] = useState('');
   const [gasUsed, setGasUsed] = useState(0);
-  const [proofTime, setProofTime] = useState(0);
-  const [memoryUsage, setMemoryUsage] = useState(0);
+  const [round, setRound] = useState(0);
   const [contract, setContract] = useState(null);
   const [signer, setSigner] = useState(null);
 
@@ -27,8 +39,8 @@ const DKGMultisigWallet = () => {
           const signer = provider.getSigner();
           setSigner(signer);
 
-          const contractAddress = "YOUR_CONTRACT_ADDRESS";
-          const contractInstance = new ethers.Contract(contractAddress, DKGMultisigWalletABI.abi, signer);
+          const contractAddress = "YOUR_CONTRACT_ADDRESS"; // Replace with your deployed contract address
+          const contractInstance = new ethers.Contract(contractAddress, DKGMultisigWalletABI, signer);
           setContract(contractInstance);
 
           contractInstance.on("ParticipantAdded", (participant) => {
@@ -36,10 +48,22 @@ const DKGMultisigWallet = () => {
             setFeedback(`Participant ${participant} added successfully!`);
           });
 
+          contractInstance.on("CommitmentSubmitted", (participant, commitment) => {
+            setFeedback(`Commitment submitted by ${participant}`);
+          });
+
+          contractInstance.on("ShareSubmitted", (participant, share) => {
+            setFeedback(`Share submitted by ${participant}`);
+          });
+
           contractInstance.on("KeyGenerated", (generatedKey) => {
             setPublicKey(generatedKey);
             setFeedback('Key generated successfully!');
           });
+
+          // Initial round fetch
+          const currentRound = await contractInstance.getRound();
+          setRound(currentRound.toNumber());
         } catch (error) {
           console.error("Failed to connect to Ethereum:", error);
           setFeedback("Failed to connect to Ethereum. Make sure you have MetaMask installed and connected to the correct network.");
@@ -60,25 +84,21 @@ const DKGMultisigWallet = () => {
 
   const addParticipant = async () => {
     if (!contract || !signer) {
-      setFeedback('Please connect to Ethereum first.');
+      setFeedback("Please connect to Ethereum first.");
       return;
     }
 
     if (participantAddress.trim() === '') {
-      setFeedback('Please enter a valid address');
+      setFeedback("Please enter a valid address");
       return;
     }
 
     try {
       const tx = await contract.addParticipant(participantAddress);
-      setFeedback('Adding participant... Please wait for transaction confirmation.');
+      setFeedback("Adding participant... Please wait for transaction confirmation.");
       
       const receipt = await tx.wait();
-      
       setGasUsed(receipt.gasUsed.toString());
-      setProofTime(Math.random() * 10); // Replace with actual proof time measurement
-      setMemoryUsage(Math.floor(Math.random() * 500) + 100); // Replace with actual memory usage measurement
-      
       setParticipantAddress('');
     } catch (error) {
       console.error("Error adding participant:", error);
@@ -86,23 +106,84 @@ const DKGMultisigWallet = () => {
     }
   };
 
-  const generateKey = async () => {
+  const startKeyGeneration = async () => {
     if (!contract || !signer) {
-      setFeedback('Please connect to Ethereum first.');
+      setFeedback("Please connect to Ethereum first.");
       return;
     }
 
     try {
-      const tx = await contract.generateKey();
-      setFeedback('Generating key... Please wait for transaction confirmation.');
+      const tx = await contract.startKeyGeneration();
+      setFeedback("Starting key generation... Please wait for transaction confirmation.");
       
       const receipt = await tx.wait();
-      
       setGasUsed(receipt.gasUsed.toString());
-      setProofTime(Math.random() * 10); // Replace with actual proof time measurement
-      setMemoryUsage(Math.floor(Math.random() * 500) + 100); // Replace with actual memory usage measurement
+      
+      const currentRound = await contract.getRound();
+      setRound(currentRound.toNumber());
     } catch (error) {
-      console.error("Error generating key:", error);
+      console.error("Error starting key generation:", error);
+      setFeedback(`Error: ${error.message}`);
+    }
+  };
+
+  const submitCommitment = async () => {
+    if (!contract || !signer) {
+      setFeedback("Please connect to Ethereum first.");
+      return;
+    }
+
+    try {
+      // In a real implementation, this would be a cryptographic commitment
+      const commitment = ethers.utils.randomBytes(32);
+      const tx = await contract.submitCommitment(commitment);
+      setFeedback("Submitting commitment... Please wait for transaction confirmation.");
+      
+      const receipt = await tx.wait();
+      setGasUsed(receipt.gasUsed.toString());
+    } catch (error) {
+      console.error("Error submitting commitment:", error);
+      setFeedback(`Error: ${error.message}`);
+    }
+  };
+
+  const submitShare = async () => {
+    if (!contract || !signer) {
+      setFeedback("Please connect to Ethereum first.");
+      return;
+    }
+
+    try {
+      // In a real implementation, this would be a cryptographic share
+      const share = ethers.utils.randomBytes(32);
+      const tx = await contract.submitShare(share);
+      setFeedback("Submitting share... Please wait for transaction confirmation.");
+      
+      const receipt = await tx.wait();
+      setGasUsed(receipt.gasUsed.toString());
+    } catch (error) {
+      console.error("Error submitting share:", error);
+      setFeedback(`Error: ${error.message}`);
+    }
+  };
+
+  const advanceRound = async () => {
+    if (!contract || !signer) {
+      setFeedback("Please connect to Ethereum first.");
+      return;
+    }
+
+    try {
+      const tx = await contract.advanceRound();
+      setFeedback("Advancing round... Please wait for transaction confirmation.");
+      
+      const receipt = await tx.wait();
+      setGasUsed(receipt.gasUsed.toString());
+      
+      const currentRound = await contract.getRound();
+      setRound(currentRound.toNumber());
+    } catch (error) {
+      console.error("Error advancing round:", error);
       setFeedback(`Error: ${error.message}`);
     }
   };
@@ -124,7 +205,10 @@ const DKGMultisigWallet = () => {
             />
           </div>
           <Button onClick={addParticipant}>Add Participant</Button>
-          <Button onClick={generateKey}>Generate Key</Button>
+          <Button onClick={startKeyGeneration}>Start Key Generation</Button>
+          <Button onClick={submitCommitment}>Submit Commitment</Button>
+          <Button onClick={submitShare}>Submit Share</Button>
+          <Button onClick={advanceRound}>Advance Round</Button>
           <Alert>
             <AlertTitle>Participants</AlertTitle>
             <AlertDescription>
@@ -132,6 +216,10 @@ const DKGMultisigWallet = () => {
                 <div key={index}>{p}</div>
               ))}
             </AlertDescription>
+          </Alert>
+          <Alert>
+            <AlertTitle>Current Round</AlertTitle>
+            <AlertDescription>{round}</AlertDescription>
           </Alert>
           {publicKey && (
             <Alert>
@@ -147,8 +235,6 @@ const DKGMultisigWallet = () => {
             <AlertTitle>Performance Metrics</AlertTitle>
             <AlertDescription>
               <p>Gas Used: {gasUsed} units</p>
-              <p>Proof Time: {proofTime.toFixed(2)} seconds</p>
-              <p>Memory Usage: {memoryUsage} MB</p>
             </AlertDescription>
           </Alert>
         </div>
