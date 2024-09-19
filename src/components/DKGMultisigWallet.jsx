@@ -16,7 +16,6 @@ const DKGMultisigWallet = () => {
   const [networkName, setNetworkName] = useState('');
   const [isConnected, setIsConnected] = useState(false);
   const [connectedAddress, setConnectedAddress] = useState('');
-  const [totalParticipants, setTotalParticipants] = useState(0);
 
   const connectWallet = async () => {
     if (typeof window.ethereum !== 'undefined') {
@@ -68,7 +67,6 @@ const DKGMultisigWallet = () => {
     try {
       const participantList = await contractInstance.getParticipants();
       setParticipants(participantList);
-      setTotalParticipants(participantList.length);
     } catch (error) {
       console.error("Error fetching participants:", error);
     }
@@ -79,7 +77,7 @@ const DKGMultisigWallet = () => {
       setFeedback("Adding you as a participant... Please check your wallet for confirmation.");
       const tx = await contractInstance.addParticipant(address);
       await tx.wait();
-      setFeedback("You have been added as a participant successfully!");
+      setFeedback(`You have been added as a participant successfully! Total participants: ${participants.length + 1}`);
     } catch (error) {
       console.error("Error adding participant:", error);
       setFeedback(`Error: ${error.message}. Make sure you have enough ETH for gas.`);
@@ -131,10 +129,6 @@ const DKGMultisigWallet = () => {
               <Button onClick={startKeyGeneration} className="bg-[#B5FF81] text-[#0A0A0A] hover:bg-transparent hover:text-[#B5FF81] border border-[#B5FF81]">Start Key Generation</Button>
             </div>
           )}
-          <Alert className="bg-transparent border border-[#B5FF81] text-[#B5FF81]">
-            <AlertTitle>Total Connected Wallets</AlertTitle>
-            <AlertDescription>{totalParticipants}</AlertDescription>
-          </Alert>
           <ParticipantList participants={participants} connectedAddress={connectedAddress} />
           <BenchmarkDisplay benchmarks={benchmarks} />
           <Alert variant={feedback.includes('Error') ? 'destructive' : 'default'} className="bg-transparent border border-[#B5FF81] text-[#B5FF81]">
