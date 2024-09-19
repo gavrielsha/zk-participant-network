@@ -2,8 +2,6 @@ import React, { useState, useEffect } from 'react';
 import { ethers } from 'ethers';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import DKGMultisigWalletABI from '../contracts/DKGMultisigWallet.json';
 import WalletConnection from './WalletConnection';
@@ -13,12 +11,10 @@ import NetworkStatus from './NetworkStatus';
 
 const DKGMultisigWallet = () => {
   const [participants, setParticipants] = useState([]);
-  const [participantAddress, setParticipantAddress] = useState('');
-  const [publicKey, setPublicKey] = useState('');
   const [feedback, setFeedback] = useState('');
   const [contract, setContract] = useState(null);
   const [signer, setSigner] = useState(null);
-  const [benchmarks, setBenchmarks] = useState({ gas: 0, proofTime: 0, memory: 0 });
+  const [benchmarks, setBenchmarks] = useState({ gas: 0, proofTime: 0 });
   const [networkName, setNetworkName] = useState('');
   const [isConnected, setIsConnected] = useState(false);
 
@@ -58,7 +54,7 @@ const DKGMultisigWallet = () => {
 
         // Add the connected wallet address as a participant
         const address = await signer.getAddress();
-        await addParticipant(address);
+        await addParticipant(address, contractInstance);
 
         setupEventListeners(contractInstance);
         fetchParticipants(contractInstance);
@@ -73,13 +69,11 @@ const DKGMultisigWallet = () => {
 
   const setupEventListeners = (contractInstance) => {
     contractInstance.on("ParticipantAdded", (participant) => {
-      setParticipants(prevParticipants => [...prevParticipants, participant]);
       setFeedback(`Participant ${participant} added successfully!`);
       fetchParticipants(contractInstance);
     });
 
     contractInstance.on("KeyGenerated", (generatedKey) => {
-      setPublicKey(generatedKey);
       setFeedback('Key generated successfully!');
     });
   };
@@ -93,38 +87,12 @@ const DKGMultisigWallet = () => {
     }
   };
 
-  const addParticipant = async (address) => {
-    if (!isConnected) {
-      setFeedback("Please connect your wallet first.");
-      return;
-    }
-
-    if (!address) {
-      address = participantAddress;
-    }
-
-    if (address.trim() === '') {
-      setFeedback("Please enter a valid address");
-      return;
-    }
-
+  const addParticipant = async (address, contractInstance) => {
     try {
-      setFeedback("Initiating transaction... Please check your wallet for confirmation.");
-      const tx = await contract.addParticipant(address);
-      setFeedback("Transaction sent. Waiting for confirmation...");
-      
-      const receipt = await tx.wait();
-      setParticipantAddress('');
-      setFeedback("Participant added successfully!");
-      
-      // Update benchmarks
-      setBenchmarks(prevBenchmarks => ({
-        ...prevBenchmarks,
-        gas: receipt.gasUsed.toString(),
-      }));
-
-      // Fetch updated participant list
-      fetchParticipants(contract);
+      setFeedback("Adding you as a participant... Please check your wallet for confirmation.");
+      const tx = await contractInstance.addParticipant(address);
+      await tx.wait();
+      setFeedback("You've been added as a participant successfully!");
     } catch (error) {
       console.error("Error adding participant:", error);
       setFeedback(`Error: ${error.message}. Make sure your wallet is connected and you have enough ETH for gas.`);
@@ -150,7 +118,6 @@ const DKGMultisigWallet = () => {
       setBenchmarks({
         gas: receipt.gasUsed.toString(),
         proofTime: endTime - startTime,
-        memory: 0 // We don't have access to memory usage in the browser
       });
 
       setFeedback("Key generation completed successfully!");
@@ -169,27 +136,10 @@ const DKGMultisigWallet = () => {
         <div className="space-y-4">
           <NetworkStatus isConnected={isConnected} networkName={networkName} />
           <WalletConnection networkName={networkName} isConnected={isConnected} onConnect={connectWallet} />
-          <div>
-            <Label htmlFor="participant-address">Participant Address</Label>
-            <Input
-              id="participant-address"
-              value={participantAddress}
-              onChange={(e) => setParticipantAddress(e.target.value)}
-              placeholder="Enter Ethereum address"
-              className="bg-transparent border-[#B5FF81] text-[#B5FF81]"
-            />
-          </div>
           <div className="space-x-4">
-            <Button onClick={() => addParticipant()} className="bg-[#B5FF81] text-[#0A0A0A] hover:bg-transparent hover:text-[#B5FF81] border border-[#B5FF81]">Add Participant</Button>
             <Button onClick={startKeyGeneration} className="bg-[#B5FF81] text-[#0A0A0A] hover:bg-transparent hover:text-[#B5FF81] border border-[#B5FF81]">Start Key Generation</Button>
           </div>
           <ParticipantList participants={participants} />
-          {publicKey && (
-            <Alert className="bg-transparent border border-[#B5FF81] text-[#B5FF81]">
-              <AlertTitle>Generated Public Key</AlertTitle>
-              <AlertDescription>{publicKey}</AlertDescription>
-            </Alert>
-          )}
           <BenchmarkDisplay benchmarks={benchmarks} />
           <Alert variant={feedback.includes('Error') ? 'destructive' : 'default'} className="bg-transparent border border-[#B5FF81] text-[#B5FF81]">
             <AlertTitle>Status</AlertTitle>

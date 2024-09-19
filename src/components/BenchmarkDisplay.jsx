@@ -18,7 +18,6 @@ const BenchmarkDisplay = ({ benchmarks }) => {
       <AlertDescription>
         <div>Gas Used: {formatGas(benchmarks.gas)} kgas</div>
         <div>Proof Time: {formatTime(benchmarks.proofTime)} seconds</div>
-        <div>Memory Usage: {benchmarks.memory} MB</div>
       </AlertDescription>
     </Alert>
   );
