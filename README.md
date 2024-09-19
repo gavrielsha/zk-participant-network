@@ -1,6 +1,11 @@
-# zkDKG: Zero-Knowledge Distributed Key Generation
+# ZK Participant Network
 
-This project implements a Zero-Knowledge Distributed Key Generation (zkDKG) protocol using zk-SNARKs and smart contracts.
+This repository replicates and benchmarks the results of the research paper:  
+**[zkDID: Efficient and Privacy-Preserving Decentralized Identity using Zero-Knowledge Proofs](https://arxiv.org/pdf/2212.10324)** by **Sobolevsky, M.** and collaborators.
+
+## About the Study
+
+The research explores zero-knowledge proof systems in the context of decentralized identity management, focusing on improving efficiency and privacy. This repository is aimed at replicating their results, specifically targeting the benchmarks detailed in their experiments. The implementation in this repo follows the methodology and testing conditions set forth in the paper to ensure accurate performance benchmarking of zkDID.
 
 ## Quick Start
 
@@ -25,6 +30,16 @@ The project includes a simple frontend to visualize ZoKrates commands. Run the a
 ## Contributing
 
 Contributions are welcome! Please read our [Contributing Guide](CONTRIBUTING.md) for more information.
+
+### Credits and Reference
+
+The work presented in this repository is inspired by and replicates the findings in the paper [zkDID: Efficient and Privacy-Preserving Decentralized Identity using Zero-Knowledge Proofs](https://arxiv.org/pdf/2212.10324), authored by Sobolevsky and his team. Their contribution to the field of zero-knowledge proof systems is invaluable, and this repo aims to provide further validation of their research through comprehensive benchmarking.
+
+The original study can be found here:  
+- **Title**: zkDID: Efficient and Privacy-Preserving Decentralized Identity using Zero-Knowledge Proofs  
+- **Authors**: Sobolevsky, M., et al.  
+- **Published**: [ArXiv 2212.10324](https://arxiv.org/pdf/2212.10324)
+This project implements a Zero-Knowledge Distributed Key Generation (zkDKG) protocol using zk-SNARKs and smart contracts.
 
 ## License
 
