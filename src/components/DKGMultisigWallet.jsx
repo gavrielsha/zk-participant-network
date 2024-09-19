@@ -16,6 +16,7 @@ const DKGMultisigWallet = () => {
   const [networkName, setNetworkName] = useState('');
   const [isConnected, setIsConnected] = useState(false);
   const [connectedAddress, setConnectedAddress] = useState('');
+  const [isParticipant, setIsParticipant] = useState(false);
 
   const connectWallet = async () => {
     if (typeof window.ethereum !== 'undefined') {
@@ -54,6 +55,10 @@ const DKGMultisigWallet = () => {
   const setupEventListeners = (contractInstance) => {
     contractInstance.on("ParticipantAdded", (participant) => {
       fetchParticipants(contractInstance);
+      if (participant.toLowerCase() === connectedAddress.toLowerCase()) {
+        setIsParticipant(true);
+        setFeedback("You have been added as a participant successfully!");
+      }
     });
 
     contractInstance.on("KeyGenerated", (generatedKey) => {
@@ -65,27 +70,16 @@ const DKGMultisigWallet = () => {
     try {
       const participantList = await contractInstance.getParticipants();
       setParticipants(participantList);
-      updateFeedbackWithParticipantCount(participantList.length);
     } catch (error) {
       console.error("Error fetching participants:", error);
     }
-  };
-
-  const updateFeedbackWithParticipantCount = (count) => {
-    setFeedback(`Total participants: ${count}`);
   };
 
   const addParticipant = async (contractInstance, address) => {
     try {
       setFeedback("Adding you as a participant... Transaction sent.");
       const tx = await contractInstance.addParticipant(address);
-      
-      // Optimistically update the UI
-      setParticipants(prevParticipants => [...prevParticipants, address]);
-      updateFeedbackWithParticipantCount(participants.length + 1);
-
       await tx.wait();
-      setFeedback("You have been added as a participant successfully!");
     } catch (error) {
       console.error("Error adding participant:", error);
       setFeedback(`Error: ${error.message}. Make sure you have enough ETH for gas.`);
@@ -98,14 +92,18 @@ const DKGMultisigWallet = () => {
       return;
     }
 
+    if (!isParticipant) {
+      setFeedback("Please wait until you're added as a participant.");
+      return;
+    }
+
     try {
       setFeedback("Initiating key generation...");
       const startTime = performance.now();
       const startMemory = performance.memory ? performance.memory.usedJSHeapSize : 0;
 
-      // Implement the zkDKG key generation process
-      const { proof, publicInputs } = await generateZKProof();
-      const tx = await contract.generateKey(proof, publicInputs);
+      // Call the generateKey function without any arguments
+      const tx = await contract.generateKey();
       const receipt = await tx.wait();
 
       const endTime = performance.now();
@@ -114,7 +112,7 @@ const DKGMultisigWallet = () => {
       setBenchmarks({
         gas: receipt.gasUsed.toString(),
         proofTime: endTime - startTime,
-        memoryUsage: Math.max(0, endMemory - startMemory), // Ensure non-negative value
+        memoryUsage: Math.max(0, endMemory - startMemory),
       });
 
       setFeedback("Key generation completed successfully!");
@@ -122,19 +120,6 @@ const DKGMultisigWallet = () => {
       console.error("Error in key generation process:", error);
       setFeedback(`Error: ${error.message}. Key generation failed.`);
     }
-  };
-
-  const generateZKProof = async () => {
-    // Implement the zkDKG proof generation logic here
-    // This is a placeholder implementation
-    return new Promise((resolve) => {
-      setTimeout(() => {
-        resolve({
-          proof: "0x1234567890abcdef",
-          publicInputs: ["0x1234", "0x5678"]
-        });
-      }, 1000); // Simulating proof generation time
-    });
   };
 
   return (
@@ -148,7 +133,7 @@ const DKGMultisigWallet = () => {
             <Button onClick={connectWallet} disabled={isConnected} className="bg-[#B5FF81] text-[#0A0A0A] hover:bg-transparent hover:text-[#B5FF81] border border-[#B5FF81]">
               {isConnected ? `Connected to ${networkName}` : "Connect Wallet"}
             </Button>
-            <Button onClick={startKeyGeneration} disabled={!isConnected} className="bg-[#B5FF81] text-[#0A0A0A] hover:bg-transparent hover:text-[#B5FF81] border border-[#B5FF81]">
+            <Button onClick={startKeyGeneration} disabled={!isConnected || !isParticipant} className="bg-[#B5FF81] text-[#0A0A0A] hover:bg-transparent hover:text-[#B5FF81] border border-[#B5FF81]">
               Start Key Generation
             </Button>
           </div>
