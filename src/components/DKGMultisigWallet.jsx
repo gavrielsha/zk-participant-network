@@ -84,6 +84,7 @@ const DKGMultisigWallet = () => {
       await tx.wait();
       setIsParticipant(true);
       setFeedback("You have been added as a participant successfully!");
+      await fetchParticipants(contractInstance);
     } catch (error) {
       console.error("Error adding participant:", error);
       setFeedback(`Error: ${error.message}. Make sure you have enough ETH for gas.`);
