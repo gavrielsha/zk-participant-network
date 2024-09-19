@@ -15,6 +15,7 @@ const DKGMultisigWallet = () => {
   const [round, setRound] = useState(0);
   const [contract, setContract] = useState(null);
   const [signer, setSigner] = useState(null);
+  const [benchmarks, setBenchmarks] = useState({ gas: 0, proofTime: 0, memory: 0 });
 
   useEffect(() => {
     const initializeEthers = async () => {
@@ -26,7 +27,7 @@ const DKGMultisigWallet = () => {
           setSigner(signer);
 
           const contractAddress = "YOUR_DEPLOYED_CONTRACT_ADDRESS"; // Replace with your deployed contract address
-          const contractInstance = new ethers.Contract(contractAddress, DKGMultisigWalletABI, signer);
+          const contractInstance = new ethers.Contract(contractAddress, DKGMultisigWalletABI.abi, signer);
           setContract(contractInstance);
 
           const currentRound = await contractInstance.getRound();
@@ -79,10 +80,19 @@ const DKGMultisigWallet = () => {
     }
 
     try {
+      const startTime = performance.now();
       const tx = await contract.addParticipant(participantAddress);
       setFeedback("Adding participant... Please wait for transaction confirmation.");
       
-      await tx.wait();
+      const receipt = await tx.wait();
+      const endTime = performance.now();
+
+      setBenchmarks(prev => ({
+        ...prev,
+        gas: receipt.gasUsed.toString(),
+        proofTime: (endTime - startTime).toFixed(2),
+      }));
+
       setParticipantAddress('');
     } catch (error) {
       console.error("Error adding participant:", error);
@@ -97,10 +107,19 @@ const DKGMultisigWallet = () => {
     }
 
     try {
+      const startTime = performance.now();
       const tx = await contract.startKeyGeneration();
       setFeedback("Starting key generation... Please wait for transaction confirmation.");
       
-      await tx.wait();
+      const receipt = await tx.wait();
+      const endTime = performance.now();
+
+      setBenchmarks(prev => ({
+        ...prev,
+        gas: receipt.gasUsed.toString(),
+        proofTime: (endTime - startTime).toFixed(2),
+      }));
+
       const currentRound = await contract.getRound();
       setRound(currentRound.toNumber());
     } catch (error) {
@@ -116,10 +135,19 @@ const DKGMultisigWallet = () => {
     }
 
     try {
+      const startTime = performance.now();
       const tx = await contract.advanceRound();
       setFeedback("Advancing round... Please wait for transaction confirmation.");
       
-      await tx.wait();
+      const receipt = await tx.wait();
+      const endTime = performance.now();
+
+      setBenchmarks(prev => ({
+        ...prev,
+        gas: receipt.gasUsed.toString(),
+        proofTime: (endTime - startTime).toFixed(2),
+      }));
+
       const currentRound = await contract.getRound();
       setRound(currentRound.toNumber());
     } catch (error) {
@@ -129,7 +157,7 @@ const DKGMultisigWallet = () => {
   };
 
   return (
-    <Card className="w-full max-w-3xl">
+    <Card className="w-full max-w-md">
       <CardHeader>
         <CardTitle>zk-SNARKs DKG Multisig Wallet</CardTitle>
       </CardHeader>
@@ -165,6 +193,14 @@ const DKGMultisigWallet = () => {
               <AlertDescription>{publicKey}</AlertDescription>
             </Alert>
           )}
+          <Alert>
+            <AlertTitle>Benchmarks</AlertTitle>
+            <AlertDescription>
+              <div>Gas Used: {benchmarks.gas}</div>
+              <div>Proof Time: {benchmarks.proofTime} ms</div>
+              <div>Memory Usage: {benchmarks.memory} MB</div>
+            </AlertDescription>
+          </Alert>
           <Alert variant={feedback.includes('Error') ? 'destructive' : 'default'}>
             <AlertTitle>Status</AlertTitle>
             <AlertDescription>{feedback}</AlertDescription>

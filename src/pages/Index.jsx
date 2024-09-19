@@ -1,25 +1,14 @@
 import React from 'react';
 import DKGMultisigWallet from '../components/DKGMultisigWallet';
+import ZoKratesRunner from '../components/ZoKratesRunner';
 
 const Index = () => {
   return (
     <div className="min-h-screen flex flex-col items-center justify-center bg-gray-100 p-4">
       <h1 className="text-4xl font-bold mb-8">zkDKG: Zero-Knowledge Distributed Key Generation</h1>
-      <DKGMultisigWallet />
-      <div className="mt-8 text-center max-w-2xl">
-        <h2 className="text-2xl font-semibold mb-4">How to Use:</h2>
-        <ol className="text-left list-decimal pl-6 space-y-2">
-          <li>Enter any string as a participant "address" in the input field</li>
-          <li>Click "Add Participant" to add the participant to the list</li>
-          <li>Repeat steps 1-2 to add multiple participants</li>
-          <li>Click "Generate Key" to simulate the DKG process</li>
-          <li>Observe the generated mock public key and simulated performance metrics</li>
-        </ol>
-        <p className="mt-4">
-          Note: This is a simplified local simulation. In a real DKG implementation, 
-          the process would involve complex cryptographic operations and actual blockchain interactions.
-          The performance metrics (gas, proof time, memory usage) are simulated for demonstration purposes.
-        </p>
+      <div className="flex flex-col md:flex-row gap-8">
+        <DKGMultisigWallet />
+        <ZoKratesRunner />
       </div>
     </div>
   );
