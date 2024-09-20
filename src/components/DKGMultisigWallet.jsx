@@ -12,7 +12,7 @@ const DKGMultisigWallet = () => {
   const [feedback, setFeedback] = useState('');
   const [contract, setContract] = useState(null);
   const [signer, setSigner] = useState(null);
-  const [benchmarks, setBenchmarks] = useState({ gas: 0, proofTime: 0, memoryUsage: 0 });
+  const [benchmarks, setBenchmarks] = useState({ gas: 0, proofTime: 0, memoryUsage: 0, transactionTime: 0 });
   const [networkName, setNetworkName] = useState('');
   const [isConnected, setIsConnected] = useState(false);
   const [connectedAddress, setConnectedAddress] = useState('');
@@ -89,9 +89,11 @@ const DKGMultisigWallet = () => {
   };
 
   const estimateMemoryUsage = () => {
-    const totalRAM = navigator.deviceMemory || 4; // Default to 4GB if deviceMemory is not available
-    const estimatedUsage = Math.floor(totalRAM * 0.1); // Estimate 10% of total RAM
-    return estimatedUsage;
+    // Estimate based on the number of participants and complexity of operations
+    const baseMemory = 50; // Base memory usage in MB
+    const perParticipantMemory = 2; // Additional memory per participant in MB
+    const estimatedUsage = baseMemory + (participants.length * perParticipantMemory);
+    return Math.round(estimatedUsage);
   };
 
   const simulateProofGeneration = async () => {
