@@ -10,7 +10,7 @@ const BenchmarkDisplay = ({ benchmarks }) => {
     <Alert className="bg-transparent border border-[#B5FF81] text-[#B5FF81]">
       <AlertTitle>Benchmarks</AlertTitle>
       <AlertDescription>
-        <div>Gas Used: {benchmarks.gas} gas</div>
+        <div>Gas Used: {benchmarks.gas} kGas</div>
         <div>Proof Generation Time: {formatTime(benchmarks.proofTime)} seconds</div>
         <div>Total Transaction Time: {formatTime(benchmarks.transactionTime)} seconds</div>
         <div>Estimated Memory Usage: {benchmarks.memoryUsage} MB</div>
